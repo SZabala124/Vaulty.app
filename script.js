@@ -12,7 +12,14 @@ const FALLBACK_IMAGE =
 const TIERS = ["S", "A", "B", "C", "D"];
 
 const state = {
-  items: [],
+  lists: [
+    {
+      id: "default",
+      name: "Principal",
+      items: []
+    }
+  ],
+  activeListId: "default",
   filter: "all",
   statusFilter: "all",
   searchResults: [],
@@ -40,6 +47,9 @@ const els = {
   exportImageBtn: document.getElementById("exportImageBtn"),
   exportRankingBtn: document.getElementById("exportRankingBtn"),
   resetListBtn: document.getElementById("resetListBtn"),
+  listSelect: document.getElementById("listSelect"),
+  newListName: document.getElementById("newListName"),
+  newListBtn: document.getElementById("newListBtn"),
   rankingPool: document.getElementById("rankingPool"),
   rankingExportArea: document.getElementById("rankingExportArea"),
   exportBoard: document.getElementById("exportBoard"),
@@ -64,6 +74,8 @@ function bindEvents() {
   bindRankingControls();
 
   els.searchForm.addEventListener("submit", onSearch);
+  els.newListBtn.addEventListener("click", createNewList);
+  els.listSelect.addEventListener("change", (event) => setActiveList(event.target.value));
   els.exportListBtn.addEventListener("click", exportListFile);
   els.importFileInput.addEventListener("change", importListFile);
   els.exportImageBtn.addEventListener("click", exportSummaryImage);
@@ -142,11 +154,50 @@ function updateActiveView() {
   });
 }
 
+function getActiveList() {
+  return state.lists.find((list) => list.id === state.activeListId) || state.lists[0];
+}
+
+function setActiveList(listId) {
+  state.activeListId = listId;
+  persistState();
+  renderAll();
+}
+
 function renderAll() {
   updateActiveView();
   renderList();
   renderSearchResults();
   renderRankings();
+  renderListSelector();
+}
+
+function renderListSelector() {
+  const active = getActiveList();
+  els.listSelect.innerHTML = "";
+
+  state.lists.forEach((list) => {
+    const option = document.createElement("option");
+    option.value = list.id;
+    option.textContent = list.name;
+    option.selected = list.id === active.id;
+    els.listSelect.appendChild(option);
+  });
+}
+
+function createNewList() {
+  const rawName = els.newListName.value.trim();
+  if (!rawName) {
+    alert("Ingresa un nombre para la nueva lista.");
+    return;
+  }
+
+  const id = `list-${Date.now()}`;
+  state.lists.push({ id, name: rawName, items: [] });
+  state.activeListId = id;
+  els.newListName.value = "";
+  persistState();
+  renderAll();
 }
 
 async function onSearch(event) {
@@ -281,7 +332,8 @@ function renderSearchResults() {
     title.textContent = result.title;
     year.textContent = `Ano: ${result.year || "-"}`;
 
-    const exists = state.items.some(
+    const activeList = getActiveList();
+    const exists = activeList.items.some(
       (item) => item.sourceId === result.sourceId && item.mediaType === result.mediaType
     );
 
@@ -316,7 +368,8 @@ function addItem(itemData) {
     updatedAt: new Date().toISOString()
   };
 
-  state.items.unshift(newItem);
+  const activeList = getActiveList();
+  activeList.items.unshift(newItem);
   persistState();
   renderAll();
 }
@@ -324,7 +377,8 @@ function addItem(itemData) {
 function renderList() {
   els.myList.innerHTML = "";
 
-  const visibleItems = state.items.filter(
+  const activeList = getActiveList();
+  const visibleItems = activeList.items.filter(
     (item) =>
       (state.filter === "all" || item.mediaType === state.filter) &&
       (state.statusFilter === "all" || item.status === state.statusFilter)
@@ -371,8 +425,8 @@ function renderList() {
     els.myList.appendChild(fragment);
   }
 
-  const doneCount = state.items.filter((item) => item.status === "done").length;
-  els.itemsCount.textContent = `${state.items.length} elementos guardados | ${doneCount} completados`;
+  const doneCount = activeList.items.filter((item) => item.status === "done").length;
+  els.itemsCount.textContent = `${activeList.items.length} elementos guardados | ${doneCount} completados`;
 }
 
 function labelMediaType(type) {
@@ -382,7 +436,8 @@ function labelMediaType(type) {
 }
 
 function toggleItemStatus(localId) {
-  state.items = state.items.map((item) => {
+  const activeList = getActiveList();
+  activeList.items = activeList.items.map((item) => {
     if (item.localId !== localId) {
       return item;
     }
@@ -399,13 +454,14 @@ function toggleItemStatus(localId) {
 }
 
 function editItem(localId) {
-  const target = state.items.find((item) => item.localId === localId);
+  const activeList = getActiveList();
+  const target = activeList.items.find((item) => item.localId === localId);
   if (!target) return;
 
   const newNotes = prompt("Anade o edita notas:", target.notes || "");
   if (newNotes === null) return;
 
-  state.items = state.items.map((item) => {
+  activeList.items = activeList.items.map((item) => {
     if (item.localId !== localId) {
       return item;
     }
@@ -430,13 +486,15 @@ async function deleteItem(localId, cardEl) {
     await waitForAnimation(cardEl, 680);
   }
 
-  state.items = state.items.filter((item) => item.localId !== localId);
+  const activeList = getActiveList();
+  activeList.items = activeList.items.filter((item) => item.localId !== localId);
   persistState();
   renderAll();
 }
 
 function renderRankings() {
-  const currentItems = state.items
+  const activeList = getActiveList();
+  const currentItems = activeList.items
     .filter((item) => item.mediaType === state.rankingType)
     .sort((a, b) => Number(a.tierOrder || 0) - Number(b.tierOrder || 0));
 
@@ -489,9 +547,10 @@ function createTierItem(item) {
 }
 
 function assignTier(localId, newTier) {
+  const activeList = getActiveList();
   let changed = false;
 
-  state.items = state.items.map((item) => {
+  activeList.items = activeList.items.map((item) => {
     if (item.localId !== localId) {
       return item;
     }
@@ -559,7 +618,8 @@ function importListFile(event) {
         return;
       }
 
-      state.items = incomingItems
+      const activeList = getActiveList();
+      activeList.items = incomingItems
         .filter((item) => item && item.title && item.mediaType)
         .map((item) => ({
           localId: item.localId || createLocalId(),
@@ -704,7 +764,8 @@ function buildExportBoard(items, exportType) {
 }
 
 async function exportRankingImage() {
-  const currentItems = state.items.filter((item) => item.mediaType === state.rankingType);
+  const activeList = getActiveList();
+  const currentItems = activeList.items.filter((item) => item.mediaType === state.rankingType);
   if (!currentItems.length) {
     alert("No hay items para exportar en esta categoria.");
     return;
@@ -794,15 +855,16 @@ function waitForAnimation(element, timeoutMs) {
 }
 
 function resetList() {
-  if (!state.items.length) {
+  const activeList = getActiveList();
+  if (!activeList.items.length) {
     alert("La lista ya esta vacia.");
     return;
   }
 
-  const ok = confirm("Se borrara toda la lista local y rankings. Continuar?");
+  const ok = confirm("Se borrara la lista activa y sus rankings. Continuar?");
   if (!ok) return;
 
-  state.items = [];
+  activeList.items = [];
   state.searchResults = [];
   persistState();
   renderAll();
@@ -810,11 +872,12 @@ function resetList() {
 }
 
 function getFilteredItemsForExport(exportType) {
+  const activeList = getActiveList();
   if (exportType === "all") {
-    return [...state.items];
+    return [...activeList.items];
   }
 
-  return state.items.filter((item) => item.mediaType === exportType);
+  return activeList.items.filter((item) => item.mediaType === exportType);
 }
 
 function downloadBlob(blob, fileName) {
@@ -836,28 +899,54 @@ function loadState() {
     }
 
     if (!raw) {
-      state.items = [];
+      state.lists = [{ id: "default", name: "Principal", items: [] }];
+      state.activeListId = "default";
       return;
     }
 
     const parsed = JSON.parse(raw);
-    state.items = Array.isArray(parsed.items)
-      ? parsed.items.map((item) => ({
+
+    if (parsed.lists && Array.isArray(parsed.lists)) {
+      state.lists = parsed.lists.map((list) => ({
+        id: list.id || `list-${Date.now()}`,
+        name: list.name || "Lista",
+        items: Array.isArray(list.items)
+          ? list.items.map((item) => ({
+              ...item,
+              tier: TIERS.includes(item.tier) ? item.tier : null,
+              tierOrder: Number(item.tierOrder || 0)
+            }))
+          : []
+      }));
+      state.activeListId = parsed.activeListId || state.lists[0].id;
+      return;
+    }
+
+    const legacyItems = Array.isArray(parsed.items) ? parsed.items : [];
+    state.lists = [
+      {
+        id: "default",
+        name: "Principal",
+        items: legacyItems.map((item) => ({
           ...item,
           tier: TIERS.includes(item.tier) ? item.tier : null,
           tierOrder: Number(item.tierOrder || 0)
         }))
-      : [];
+      }
+    ];
+    state.activeListId = "default";
   } catch (error) {
     console.error("Error leyendo LocalStorage:", error);
-    state.items = [];
+    state.lists = [{ id: "default", name: "Principal", items: [] }];
+    state.activeListId = "default";
   }
 }
 
 function persistState() {
   const payload = {
     version: 3,
-    items: state.items,
+    lists: state.lists,
+    activeListId: state.activeListId,
     savedAt: new Date().toISOString()
   };
 
