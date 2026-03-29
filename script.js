@@ -402,9 +402,6 @@ function editItem(localId) {
   const target = state.items.find((item) => item.localId === localId);
   if (!target) return;
 
-  const newTitle = prompt("Editar titulo:", target.title);
-  if (newTitle === null) return;
-
   const newNotes = prompt("Anade o edita notas:", target.notes || "");
   if (newNotes === null) return;
 
@@ -415,7 +412,6 @@ function editItem(localId) {
 
     return {
       ...item,
-      title: newTitle.trim() || item.title,
       notes: newNotes.trim(),
       updatedAt: new Date().toISOString()
     };
@@ -484,6 +480,7 @@ function createTierItem(item) {
   }
 
   const img = document.createElement("img");
+  img.crossOrigin = "anonymous";
   img.src = item.image || FALLBACK_IMAGE;
   img.alt = item.title;
 
@@ -610,6 +607,7 @@ async function exportSummaryImage() {
 
     buildExportBoard(selectedItems, exportType);
     els.exportBoard.classList.remove("hidden");
+    await waitForImages(els.exportBoard);
 
     const canvas = await html2canvas(els.exportBoard, {
       backgroundColor: "#0f172a",
@@ -680,6 +678,7 @@ function buildExportBoard(items, exportType) {
       if (showCover) {
         const cover = document.createElement("img");
         cover.className = "export-cover";
+        cover.crossOrigin = "anonymous";
         cover.src = item.image;
         cover.alt = item.title;
         row.appendChild(checkbox);
@@ -715,6 +714,7 @@ async function exportRankingImage() {
   try {
     els.exportRankingBtn.disabled = true;
     els.exportRankingBtn.textContent = "Generando ranking...";
+    await waitForImages(els.rankingExportArea);
 
     const canvas = await html2canvas(els.rankingExportArea, {
       backgroundColor: "#0f172a",
@@ -756,6 +756,27 @@ function shouldShowExportCover(item) {
   }
 
   return item.image !== FALLBACK_IMAGE;
+}
+
+async function waitForImages(container) {
+  const images = Array.from(container.querySelectorAll("img"));
+  if (!images.length) {
+    return;
+  }
+
+  await Promise.all(
+    images.map((img) => {
+      if (img.complete && img.naturalWidth > 0) {
+        return Promise.resolve();
+      }
+
+      return new Promise((resolve) => {
+        const done = () => resolve();
+        img.addEventListener("load", done, { once: true });
+        img.addEventListener("error", done, { once: true });
+      });
+    })
+  );
 }
 
 function waitForAnimation(element, timeoutMs) {
