@@ -480,7 +480,6 @@ function createTierItem(item) {
   }
 
   const img = document.createElement("img");
-  img.crossOrigin = "anonymous";
   img.src = item.image || FALLBACK_IMAGE;
   img.alt = item.title;
 
