@@ -42,6 +42,44 @@ body {
   animation-delay: 2s;
 }
 
+.section-card {
+  border: 1px solid rgba(100, 116, 139, 0.45);
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, 0.7);
+  box-shadow: 0 28px 58px rgba(2, 6, 23, 0.35);
+  backdrop-filter: blur(10px);
+}
+
+.anchor-chip {
+  border: 1px solid rgba(100, 116, 139, 0.45);
+  border-radius: 0.8rem;
+  background: rgba(15, 23, 42, 0.85);
+  color: #dbeafe;
+  text-align: center;
+  padding: 0.55rem 0.9rem;
+  text-decoration: none;
+  transition: all 200ms ease;
+}
+
+.anchor-chip:hover {
+  border-color: rgba(34, 211, 238, 0.8);
+  transform: translateY(-2px);
+}
+
+.field-input {
+  border: 1px solid rgba(100, 116, 139, 0.55);
+  border-radius: 0.8rem;
+  background: rgba(15, 23, 42, 0.85);
+  color: #f1f5f9;
+  padding: 0.5rem 0.75rem;
+  transition: border-color 200ms ease;
+}
+
+.field-input:focus {
+  border-color: rgba(34, 211, 238, 0.95);
+  outline: none;
+}
+
 .filter-btn,
 .action-btn {
   border: 1px solid rgba(100, 116, 139, 0.45);
@@ -66,6 +104,15 @@ body {
   color: #67e8f9;
 }
 
+.action-btn-danger {
+  border-color: rgba(251, 113, 133, 0.45);
+  color: #fecdd3;
+}
+
+.action-btn-danger:hover {
+  border-color: rgba(251, 113, 133, 0.85);
+}
+
 .result-image,
 .list-image {
   background:
@@ -85,12 +132,163 @@ body {
 }
 
 .is-done {
-  opacity: 0.76;
+  opacity: 0.8;
   border-color: rgba(52, 211, 153, 0.6);
 }
 
 .is-done .list-title {
   text-decoration: line-through;
+}
+
+.ranking-card {
+  border: 1px solid rgba(100, 116, 139, 0.45);
+  border-radius: 0.9rem;
+  background: rgba(15, 23, 42, 0.72);
+  padding: 1rem;
+}
+
+.ranking-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #a5f3fc;
+}
+
+.ranking-list {
+  list-style: decimal;
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ranking-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  color: #e2e8f0;
+  font-size: 0.92rem;
+}
+
+.ranking-score {
+  min-width: 3.5rem;
+  text-align: right;
+  font-weight: 700;
+  color: #67e8f9;
+}
+
+.ranking-empty {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.export-board {
+  width: 950px;
+  max-width: 100%;
+  min-height: 1200px;
+  margin: 0;
+  padding: 2.2rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
+    repeating-linear-gradient(0deg, rgba(34, 211, 238, 0.12) 0, rgba(34, 211, 238, 0.12) 1px, transparent 1px, transparent 28px),
+    #0f172a;
+  border: 2px solid rgba(34, 211, 238, 0.35);
+  border-radius: 26px;
+  position: fixed;
+  left: -99999px;
+  top: -99999px;
+}
+
+.export-top {
+  border-bottom: 2px dashed rgba(34, 211, 238, 0.45);
+  padding-bottom: 1rem;
+  margin-bottom: 1.2rem;
+}
+
+.export-title {
+  margin: 0;
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #cffafe;
+}
+
+.export-subtitle {
+  margin-top: 0.35rem;
+  color: #cbd5e1;
+  font-size: 1rem;
+}
+
+.export-checklist {
+  display: grid;
+  gap: 1rem;
+}
+
+.export-group {
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.76);
+  padding: 0.9rem;
+}
+
+.export-group-title {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #a5f3fc;
+}
+
+.export-row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.export-row:last-child {
+  border-bottom: 0;
+}
+
+.export-checkbox {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(148, 163, 184, 0.7);
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  color: #10b981;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.export-text {
+  color: #e2e8f0;
+  font-size: 0.96rem;
+}
+
+.export-text.done {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.export-score {
+  color: #67e8f9;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.export-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+  color: #cbd5e1;
+  font-size: 0.95rem;
+}
+
+.hidden {
+  display: none;
 }
 
 @keyframes fadeIn {

@@ -32,34 +32,38 @@
     <div class="bg-orb orb-2" aria-hidden="true"></div>
 
     <main class="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <header class="mb-8 rounded-2xl border border-slate-700/50 bg-slate-900/70 p-6 shadow-2xl backdrop-blur">
-        <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <header class="section-card mb-8 p-6 sm:p-8">
+        <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p class="mb-2 inline-flex items-center rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-cyan-200">
-              SPA Local + Exportable
+              SPA Local + Compartible
             </p>
             <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">Mi Lista Multimedia</h1>
             <p class="mt-2 max-w-2xl text-sm text-slate-300 sm:text-base">
-              Busca películas, series y canciones. Guarda tu lista para ver/escuchar y márcala cuando completes cada elemento.
+              Organiza tus películas, series y canciones para irlas tachando, puntuando y compartiendo.
             </p>
           </div>
-          <div class="text-sm text-slate-300">
-            <p>Guardado automático en LocalStorage.</p>
+          <div>
+            <p class="text-sm text-slate-300">Guardado automático en LocalStorage.</p>
             <p id="itemsCount" class="font-medium text-cyan-300">0 elementos guardados</p>
           </div>
         </div>
+
+        <nav class="grid gap-2 text-sm sm:grid-cols-2 md:grid-cols-4">
+          <a href="#busqueda" class="anchor-chip">Busqueda</a>
+          <a href="#lista" class="anchor-chip">Mi lista</a>
+          <a href="#sync" class="anchor-chip">Sincronizar y exportar</a>
+          <a href="#rankings" class="anchor-chip">Rankings</a>
+        </nav>
       </header>
 
-      <section class="mb-8 rounded-2xl border border-slate-700/50 bg-slate-900/70 p-6 shadow-2xl backdrop-blur">
-        <h2 class="mb-4 text-xl font-semibold">Buscador</h2>
+      <section id="busqueda" class="section-card mb-8 p-6">
+        <h2 class="mb-4 text-xl font-semibold">Busqueda</h2>
 
-        <form id="searchForm" class="grid gap-3 md:grid-cols-[200px_1fr_auto]">
+        <form id="searchForm" class="grid gap-3 md:grid-cols-[220px_1fr_auto]">
           <label class="sr-only" for="searchType">Tipo de contenido</label>
-          <select
-            id="searchType"
-            class="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-slate-100 transition focus:border-cyan-400 focus:outline-none"
-          >
-            <option value="movie">Películas (TMDb)</option>
+          <select id="searchType" class="field-input">
+            <option value="movie">Peliculas (TMDb)</option>
             <option value="series">Series (TMDb)</option>
             <option value="music">Canciones (Last.fm)</option>
           </select>
@@ -69,50 +73,90 @@
             id="searchInput"
             type="text"
             placeholder="Ej: Interstellar, Breaking Bad, Daft Punk..."
-            class="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-slate-100 placeholder:text-slate-400 transition focus:border-cyan-400 focus:outline-none"
+            class="field-input"
             required
           />
 
-          <button
-            type="submit"
-            class="rounded-xl bg-brand-500 px-4 py-2 font-semibold text-slate-950 transition hover:bg-brand-600"
-          >
+          <button type="submit" class="rounded-xl bg-brand-500 px-4 py-2 font-semibold text-slate-950 transition hover:bg-brand-600">
             Buscar
           </button>
         </form>
 
         <p id="searchMessage" class="mt-3 text-sm text-slate-400">
-          Completa tu API KEY de TMDb y Last.fm en <code>script.js</code> para activar las búsquedas.
+          Completa tu API KEY de TMDb y Last.fm en script.js para activar las busquedas.
         </p>
 
         <div id="searchResults" class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
       </section>
 
-      <section class="rounded-2xl border border-slate-700/50 bg-slate-900/70 p-6 shadow-2xl backdrop-blur">
+      <section id="lista" class="section-card mb-8 p-6">
         <div class="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 class="text-xl font-semibold">Mi Lista</h2>
-            <p class="text-sm text-slate-400">Marca como completado, edita notas o elimina elementos.</p>
+            <p class="text-sm text-slate-400">Marca como completado, edita, puntua y elimina elementos.</p>
           </div>
-
           <div class="flex flex-wrap items-center gap-2">
             <button class="filter-btn active" data-filter="all">Todo</button>
             <button class="filter-btn" data-filter="movie">Cine</button>
             <button class="filter-btn" data-filter="series">Series</button>
-            <button class="filter-btn" data-filter="music">Música</button>
+            <button class="filter-btn" data-filter="music">Musica</button>
           </div>
-        </div>
-
-        <div class="mb-6 flex flex-wrap gap-3">
-          <button id="exportListBtn" class="action-btn">Exportar Lista (.mylist)</button>
-          <label for="importFileInput" class="action-btn cursor-pointer">Cargar Lista</label>
-          <input id="importFileInput" type="file" accept=".json,.mylist" class="hidden" />
-          <button id="exportImageBtn" class="action-btn">Exportar Resumen (imagen)</button>
         </div>
 
         <div id="myList" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
       </section>
+
+      <section id="sync" class="section-card mb-8 p-6">
+        <h2 class="mb-4 text-xl font-semibold">Sincronizar y Exportar</h2>
+
+        <div class="mb-4 grid gap-3 sm:grid-cols-[220px_1fr] sm:items-center">
+          <label for="exportScope" class="text-sm text-slate-300">Exportar solo esta categoria:</label>
+          <select id="exportScope" class="field-input max-w-xs">
+            <option value="all">Todo</option>
+            <option value="movie">Solo peliculas</option>
+            <option value="series">Solo series</option>
+            <option value="music">Solo canciones</option>
+          </select>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+          <button id="exportListBtn" class="action-btn">Exportar Lista (.mylist)</button>
+          <label for="importFileInput" class="action-btn cursor-pointer">Cargar Lista</label>
+          <input id="importFileInput" type="file" accept=".json,.mylist" class="hidden" />
+          <button id="exportImageBtn" class="action-btn">Exportar Resumen (imagen)</button>
+          <button id="resetListBtn" class="action-btn action-btn-danger">Resetear Lista</button>
+        </div>
+      </section>
+
+      <section id="rankings" class="section-card p-6">
+        <h2 class="mb-2 text-xl font-semibold">Rankings por Categoria</h2>
+        <p class="mb-5 text-sm text-slate-400">Asigna puntuaciones de 1 a 10 en cada tarjeta de tu lista para construir el ranking.</p>
+
+        <div class="grid gap-4 lg:grid-cols-3">
+          <article class="ranking-card">
+            <h3 class="ranking-title">Top Peliculas</h3>
+            <ol id="rankingMovie" class="ranking-list"></ol>
+          </article>
+          <article class="ranking-card">
+            <h3 class="ranking-title">Top Series</h3>
+            <ol id="rankingSeries" class="ranking-list"></ol>
+          </article>
+          <article class="ranking-card">
+            <h3 class="ranking-title">Top Canciones</h3>
+            <ol id="rankingMusic" class="ranking-list"></ol>
+          </article>
+        </div>
+      </section>
     </main>
+
+    <section id="exportBoard" class="export-board hidden" aria-hidden="true">
+      <div class="export-top">
+        <h2 id="exportBoardTitle" class="export-title">Resumen Multimedia</h2>
+        <p id="exportBoardSubtitle" class="export-subtitle"></p>
+      </div>
+      <div id="exportChecklist" class="export-checklist"></div>
+      <p class="export-footer">Hecho con Mi Lista Multimedia</p>
+    </section>
 
     <template id="searchCardTemplate">
       <article class="card-pop rounded-2xl border border-slate-700 bg-slate-800/80 p-3">
@@ -120,7 +164,7 @@
         <h3 class="result-title line-clamp-1 text-lg font-semibold"></h3>
         <p class="result-year text-sm text-slate-300"></p>
         <button class="add-btn mt-4 w-full rounded-lg bg-cyan-400/90 px-3 py-2 font-semibold text-slate-950 transition hover:bg-cyan-300">
-          Añadir a mi lista
+          Anadir a mi lista
         </button>
       </article>
     </template>
@@ -138,7 +182,24 @@
 
         <p class="list-notes min-h-11 rounded-lg bg-slate-900/70 p-2 text-sm text-slate-300"></p>
 
-        <div class="mt-3 grid grid-cols-3 gap-2">
+        <div class="mt-3 mb-3 grid gap-2">
+          <label class="text-xs font-medium uppercase tracking-wide text-slate-400" for="">Puntuacion (ranking)</label>
+          <select class="rank-select field-input py-1.5 text-sm">
+            <option value="0">Sin puntuacion</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
           <button class="toggle-btn rounded-lg bg-emerald-500/80 px-2 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"></button>
           <button class="edit-btn rounded-lg bg-amber-400/90 px-2 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-300">Editar</button>
           <button class="delete-btn rounded-lg bg-rose-500/85 px-2 py-2 text-sm font-semibold text-white transition hover:bg-rose-400">Eliminar</button>

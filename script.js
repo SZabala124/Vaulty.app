@@ -1,4 +1,4 @@
-const STORAGE_KEY = "my-media-list-v1";
+const STORAGE_KEY = "my-media-list-v2";
 
 // API KEYS: reemplaza estos valores por tus claves reales.
 const TMDB_API_KEY = "3f5a361e20e40f9b8f6d577c84b00e0b";
@@ -22,9 +22,18 @@ const els = {
   searchResults: document.getElementById("searchResults"),
   myList: document.getElementById("myList"),
   itemsCount: document.getElementById("itemsCount"),
+  exportScope: document.getElementById("exportScope"),
   exportListBtn: document.getElementById("exportListBtn"),
   importFileInput: document.getElementById("importFileInput"),
   exportImageBtn: document.getElementById("exportImageBtn"),
+  resetListBtn: document.getElementById("resetListBtn"),
+  rankingMovie: document.getElementById("rankingMovie"),
+  rankingSeries: document.getElementById("rankingSeries"),
+  rankingMusic: document.getElementById("rankingMusic"),
+  exportBoard: document.getElementById("exportBoard"),
+  exportBoardTitle: document.getElementById("exportBoardTitle"),
+  exportBoardSubtitle: document.getElementById("exportBoardSubtitle"),
+  exportChecklist: document.getElementById("exportChecklist"),
   searchCardTemplate: document.getElementById("searchCardTemplate"),
   listCardTemplate: document.getElementById("listCardTemplate")
 };
@@ -34,8 +43,7 @@ document.addEventListener("DOMContentLoaded", init);
 function init() {
   loadState();
   bindEvents();
-  renderList();
-  renderSearchResults();
+  renderAll();
 }
 
 function bindEvents() {
@@ -53,6 +61,13 @@ function bindEvents() {
   els.exportListBtn.addEventListener("click", exportListFile);
   els.importFileInput.addEventListener("change", importListFile);
   els.exportImageBtn.addEventListener("click", exportSummaryImage);
+  els.resetListBtn.addEventListener("click", resetList);
+}
+
+function renderAll() {
+  renderList();
+  renderSearchResults();
+  renderRankings();
 }
 
 async function onSearch(event) {
@@ -78,7 +93,7 @@ async function onSearch(event) {
     const total = state.searchResults.length;
     els.searchMessage.textContent = total
       ? `Se encontraron ${total} resultados.`
-      : "No se encontraron resultados para esa búsqueda.";
+      : "No se encontraron resultados para esa busqueda.";
     renderSearchResults();
   } catch (error) {
     console.error(error);
@@ -102,7 +117,7 @@ async function searchTmdb(query, type) {
 
   const res = await fetch(url);
   if (!res.ok) {
-    throw new Error("Error consultando TMDb. Revisa tu API KEY o conexión.");
+    throw new Error("Error consultando TMDb. Revisa tu API KEY o conexion.");
   }
 
   const data = await res.json();
@@ -116,7 +131,8 @@ async function searchTmdb(query, type) {
       image: item.poster_path ? `${TMDB_IMAGE_BASE}${item.poster_path}` : FALLBACK_IMAGE,
       source: "tmdb",
       notes: "",
-      status: "pending"
+      status: "pending",
+      rank: 0
     };
   });
 }
@@ -128,7 +144,7 @@ async function searchMusic(query) {
 
   const res = await fetch(url);
   if (!res.ok) {
-    throw new Error("Error consultando Last.fm. Revisa tu API KEY o conexión.");
+    throw new Error("Error consultando Last.fm. Revisa tu API KEY o conexion.");
   }
 
   const data = await res.json();
@@ -145,7 +161,8 @@ async function searchMusic(query) {
       image: pickLastFmImage(track.image),
       source: "lastfm",
       notes: "",
-      status: "pending"
+      status: "pending",
+      rank: 0
     }));
 }
 
@@ -182,7 +199,7 @@ function renderSearchResults() {
     img.src = result.image || FALLBACK_IMAGE;
     img.alt = result.title;
     title.textContent = result.title;
-    year.textContent = `Año: ${result.year || "-"}`;
+    year.textContent = `Ano: ${result.year || "-"}`;
 
     const exists = state.items.some(
       (item) => item.sourceId === result.sourceId && item.mediaType === result.mediaType
@@ -191,7 +208,7 @@ function renderSearchResults() {
     if (exists) {
       addBtn.disabled = true;
       addBtn.classList.add("cursor-not-allowed", "opacity-50");
-      addBtn.textContent = "Ya está en tu lista";
+      addBtn.textContent = "Ya esta en tu lista";
     } else {
       addBtn.addEventListener("click", () => addItem(result));
     }
@@ -214,14 +231,14 @@ function addItem(itemData) {
     source: itemData.source,
     notes: "",
     status: "pending",
+    rank: 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
 
   state.items.unshift(newItem);
   persistState();
-  renderList();
-  renderSearchResults();
+  renderAll();
 }
 
 function renderList() {
@@ -233,7 +250,7 @@ function renderList() {
 
   if (!visibleItems.length) {
     els.myList.innerHTML =
-      '<p class="col-span-full rounded-xl border border-dashed border-slate-600 p-6 text-center text-slate-400">No hay elementos para este filtro todavía.</p>';
+      '<p class="col-span-full rounded-xl border border-dashed border-slate-600 p-6 text-center text-slate-400">No hay elementos para este filtro todavia.</p>';
   } else {
     const fragment = document.createDocumentFragment();
 
@@ -245,6 +262,7 @@ function renderList() {
       const title = node.querySelector(".list-title");
       const year = node.querySelector(".list-year");
       const notes = node.querySelector(".list-notes");
+      const rankSelect = node.querySelector(".rank-select");
       const toggleBtn = node.querySelector(".toggle-btn");
       const editBtn = node.querySelector(".edit-btn");
       const deleteBtn = node.querySelector(".delete-btn");
@@ -253,8 +271,9 @@ function renderList() {
       img.alt = item.title;
       type.textContent = labelMediaType(item.mediaType);
       title.textContent = item.title;
-      year.textContent = `Año: ${item.year || "-"}`;
+      year.textContent = `Ano: ${item.year || "-"}`;
       notes.textContent = item.notes || "Sin notas";
+      rankSelect.value = String(item.rank || 0);
 
       toggleBtn.textContent = item.status === "done" ? "Desmarcar" : "Tachar";
 
@@ -262,6 +281,9 @@ function renderList() {
         card.classList.add("is-done");
       }
 
+      rankSelect.addEventListener("change", (event) => {
+        setItemRank(item.localId, Number(event.target.value));
+      });
       toggleBtn.addEventListener("click", () => toggleItemStatus(item.localId));
       editBtn.addEventListener("click", () => editItem(item.localId));
       deleteBtn.addEventListener("click", () => deleteItem(item.localId));
@@ -279,7 +301,24 @@ function renderList() {
 function labelMediaType(type) {
   if (type === "movie") return "Cine";
   if (type === "series") return "Series";
-  return "Música";
+  return "Musica";
+}
+
+function setItemRank(localId, rank) {
+  state.items = state.items.map((item) => {
+    if (item.localId !== localId) {
+      return item;
+    }
+
+    return {
+      ...item,
+      rank,
+      updatedAt: new Date().toISOString()
+    };
+  });
+
+  persistState();
+  renderRankings();
 }
 
 function toggleItemStatus(localId) {
@@ -303,10 +342,10 @@ function editItem(localId) {
   const target = state.items.find((item) => item.localId === localId);
   if (!target) return;
 
-  const newTitle = prompt("Editar título:", target.title);
+  const newTitle = prompt("Editar titulo:", target.title);
   if (newTitle === null) return;
 
-  const newNotes = prompt("Añade o edita notas:", target.notes || "");
+  const newNotes = prompt("Anade o edita notas:", target.notes || "");
   if (newNotes === null) return;
 
   state.items = state.items.map((item) => {
@@ -323,25 +362,32 @@ function editItem(localId) {
   });
 
   persistState();
-  renderList();
-  renderSearchResults();
+  renderAll();
 }
 
 function deleteItem(localId) {
-  const ok = confirm("¿Eliminar este elemento de tu lista?");
+  const ok = confirm("Eliminar este elemento de tu lista?");
   if (!ok) return;
 
   state.items = state.items.filter((item) => item.localId !== localId);
   persistState();
-  renderList();
-  renderSearchResults();
+  renderAll();
 }
 
 function exportListFile() {
+  const exportType = els.exportScope.value;
+  const selectedItems = getFilteredItemsForExport(exportType);
+
+  if (!selectedItems.length) {
+    alert("No hay elementos para exportar con ese filtro.");
+    return;
+  }
+
   const payload = {
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
-    items: state.items
+    exportType,
+    items: selectedItems
   };
 
   const blob = new Blob([JSON.stringify(payload, null, 2)], {
@@ -349,7 +395,7 @@ function exportListFile() {
   });
 
   const date = new Date().toISOString().slice(0, 10);
-  downloadBlob(blob, `mi-lista-${date}.mylist`);
+  downloadBlob(blob, `mi-lista-${exportType}-${date}.mylist`);
 }
 
 function importListFile(event) {
@@ -364,11 +410,11 @@ function importListFile(event) {
       const incomingItems = Array.isArray(parsed) ? parsed : parsed.items;
 
       if (!Array.isArray(incomingItems)) {
-        throw new Error("Archivo inválido: no contiene una lista válida.");
+        throw new Error("Archivo invalido: no contiene una lista valida.");
       }
 
       const shouldReplace = confirm(
-        "Se reemplazará tu lista local actual por la lista importada. ¿Continuar?"
+        "Se reemplazara tu lista local actual por la lista importada. Continuar?"
       );
       if (!shouldReplace) {
         return;
@@ -386,13 +432,13 @@ function importListFile(event) {
           source: item.source || "import",
           notes: item.notes || "",
           status: item.status === "done" ? "done" : "pending",
+          rank: clampRank(Number(item.rank || 0)),
           createdAt: item.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }));
 
       persistState();
-      renderList();
-      renderSearchResults();
+      renderAll();
       els.searchMessage.textContent = "Lista cargada correctamente.";
     } catch (error) {
       console.error(error);
@@ -406,8 +452,11 @@ function importListFile(event) {
 }
 
 async function exportSummaryImage() {
-  if (!state.items.length) {
-    alert("No hay elementos en tu lista para exportar.");
+  const exportType = els.exportScope.value;
+  const selectedItems = getFilteredItemsForExport(exportType);
+
+  if (!selectedItems.length) {
+    alert("No hay elementos para exportar con ese filtro.");
     return;
   }
 
@@ -415,27 +464,160 @@ async function exportSummaryImage() {
     els.exportImageBtn.disabled = true;
     els.exportImageBtn.textContent = "Generando imagen...";
 
-    const canvas = await html2canvas(els.myList, {
+    buildExportBoard(selectedItems, exportType);
+    els.exportBoard.classList.remove("hidden");
+
+    const canvas = await html2canvas(els.exportBoard, {
       backgroundColor: "#0f172a",
       scale: 2,
       useCORS: true
     });
 
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        throw new Error("No se pudo generar la imagen.");
-      }
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+    if (!blob) {
+      throw new Error("No se pudo generar la imagen.");
+    }
 
-      const date = new Date().toISOString().slice(0, 10);
-      downloadBlob(blob, `resumen-lista-${date}.png`);
-    });
+    const date = new Date().toISOString().slice(0, 10);
+    downloadBlob(blob, `resumen-${exportType}-${date}.png`);
   } catch (error) {
     console.error(error);
     alert("No se pudo exportar el resumen en imagen.");
   } finally {
+    els.exportBoard.classList.add("hidden");
     els.exportImageBtn.disabled = false;
     els.exportImageBtn.textContent = "Exportar Resumen (imagen)";
   }
+}
+
+function buildExportBoard(items, exportType) {
+  const done = items.filter((item) => item.status === "done").length;
+  const scopeLabel = exportType === "all" ? "Todo" : labelMediaType(exportType);
+
+  els.exportBoardTitle.textContent = `Lista: ${scopeLabel}`;
+  els.exportBoardSubtitle.textContent = `${items.length} elementos | ${done} completados | ${new Date().toLocaleDateString("es-ES")}`;
+
+  const grouped = {
+    movie: items.filter((item) => item.mediaType === "movie"),
+    series: items.filter((item) => item.mediaType === "series"),
+    music: items.filter((item) => item.mediaType === "music")
+  };
+
+  const groupsToRender = [
+    { key: "movie", title: "Peliculas" },
+    { key: "series", title: "Series" },
+    { key: "music", title: "Canciones" }
+  ].filter((group) => grouped[group.key].length > 0);
+
+  els.exportChecklist.innerHTML = "";
+
+  groupsToRender.forEach((group) => {
+    const wrapper = document.createElement("article");
+    wrapper.className = "export-group";
+
+    const title = document.createElement("h3");
+    title.className = "export-group-title";
+    title.textContent = group.title;
+    wrapper.appendChild(title);
+
+    grouped[group.key].forEach((item) => {
+      const row = document.createElement("div");
+      row.className = "export-row";
+
+      const checkbox = document.createElement("span");
+      checkbox.className = "export-checkbox";
+      checkbox.textContent = item.status === "done" ? "✓" : "";
+
+      const text = document.createElement("span");
+      text.className = `export-text ${item.status === "done" ? "done" : ""}`;
+      text.textContent = item.title;
+
+      const score = document.createElement("span");
+      score.className = "export-score";
+      score.textContent = item.rank > 0 ? `${item.rank}/10` : "-";
+
+      row.appendChild(checkbox);
+      row.appendChild(text);
+      row.appendChild(score);
+      wrapper.appendChild(row);
+    });
+
+    els.exportChecklist.appendChild(wrapper);
+  });
+}
+
+function renderRankings() {
+  renderRankingForType(els.rankingMovie, "movie");
+  renderRankingForType(els.rankingSeries, "series");
+  renderRankingForType(els.rankingMusic, "music");
+}
+
+function renderRankingForType(container, mediaType) {
+  const ranked = state.items
+    .filter((item) => item.mediaType === mediaType && Number(item.rank) > 0)
+    .sort((a, b) => Number(b.rank) - Number(a.rank) || a.title.localeCompare(b.title))
+    .slice(0, 10);
+
+  container.innerHTML = "";
+
+  if (!ranked.length) {
+    container.innerHTML = '<li class="ranking-empty">Sin items puntuados todavia.</li>';
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+
+  ranked.forEach((item) => {
+    const li = document.createElement("li");
+    li.className = "ranking-item";
+
+    const name = document.createElement("span");
+    name.textContent = item.title;
+
+    const score = document.createElement("span");
+    score.className = "ranking-score";
+    score.textContent = `${item.rank}/10`;
+
+    li.appendChild(name);
+    li.appendChild(score);
+    fragment.appendChild(li);
+  });
+
+  container.appendChild(fragment);
+}
+
+function resetList() {
+  if (!state.items.length) {
+    alert("La lista ya esta vacia.");
+    return;
+  }
+
+  const ok = confirm("Se borrara toda la lista local y rankings. Continuar?");
+  if (!ok) return;
+
+  state.items = [];
+  state.searchResults = [];
+  persistState();
+  renderAll();
+  els.searchMessage.textContent = "Lista reseteada correctamente.";
+}
+
+function getFilteredItemsForExport(exportType) {
+  if (exportType === "all") {
+    return [...state.items];
+  }
+
+  return state.items.filter((item) => item.mediaType === exportType);
+}
+
+function clampRank(value) {
+  if (Number.isNaN(value)) {
+    return 0;
+  }
+
+  if (value < 0) return 0;
+  if (value > 10) return 10;
+  return Math.round(value);
 }
 
 function downloadBlob(blob, fileName) {
@@ -458,7 +640,12 @@ function loadState() {
     }
 
     const parsed = JSON.parse(raw);
-    state.items = Array.isArray(parsed.items) ? parsed.items : [];
+    state.items = Array.isArray(parsed.items)
+      ? parsed.items.map((item) => ({
+          ...item,
+          rank: clampRank(Number(item.rank || 0))
+        }))
+      : [];
   } catch (error) {
     console.error("Error leyendo LocalStorage:", error);
     state.items = [];
@@ -467,7 +654,7 @@ function loadState() {
 
 function persistState() {
   const payload = {
-    version: 1,
+    version: 2,
     items: state.items,
     savedAt: new Date().toISOString()
   };
