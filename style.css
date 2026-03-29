@@ -53,26 +53,33 @@ body {
 .app-brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.3rem 0.55rem;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.65);
+  gap: 0.7rem;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }
 
 .app-logo {
-  width: 30px;
-  height: 30px;
+  width: 54px;
+  height: 54px;
   object-fit: contain;
-  filter: drop-shadow(0 4px 8px rgba(34, 211, 238, 0.35));
+  filter: drop-shadow(0 4px 10px rgba(34, 211, 238, 0.45));
+}
+
+.app-logo-large {
+  width: 62px;
+  height: 62px;
 }
 
 .app-brand-text {
-  color: #cffafe;
-  font-size: 0.9rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  color: #e0f2fe;
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-shadow: 0 2px 12px rgba(34, 211, 238, 0.45);
 }
+
 
 .anchor-chip {
   border: 1px solid rgba(100, 116, 139, 0.45);
