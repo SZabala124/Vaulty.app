@@ -1,4 +1,5 @@
-const STORAGE_KEY = "my-media-list-v2";
+const STORAGE_KEY = "my-media-list-v3";
+const LEGACY_STORAGE_KEYS = ["my-media-list-v2", "my-media-list-v1"];
 
 // API KEYS: reemplaza estos valores por tus claves reales.
 const TMDB_API_KEY = "3f5a361e20e40f9b8f6d577c84b00e0b";
@@ -8,16 +9,24 @@ const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 const FALLBACK_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='750'%3E%3Crect width='100%25' height='100%25' fill='%231e293b'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23cbd5e1' font-size='28' font-family='Arial'%3ESin imagen%3C/text%3E%3C/svg%3E";
 
+const TIERS = ["S", "A", "B", "C", "D"];
+
 const state = {
   items: [],
   filter: "all",
+  statusFilter: "all",
   searchResults: [],
-  activeView: "busqueda"
+  activeView: "busqueda",
+  rankingType: "movie"
 };
 
 const els = {
   viewChips: document.querySelectorAll(".view-chip"),
   viewPanels: document.querySelectorAll(".view-panel"),
+  filterBtns: document.querySelectorAll(".filter-btn"),
+  statusFilterBtns: document.querySelectorAll(".status-filter-btn"),
+  rankingTypeBtns: document.querySelectorAll(".ranking-type-btn"),
+  tierDropzones: document.querySelectorAll(".tier-dropzone"),
   searchForm: document.getElementById("searchForm"),
   searchType: document.getElementById("searchType"),
   searchInput: document.getElementById("searchInput"),
@@ -29,10 +38,10 @@ const els = {
   exportListBtn: document.getElementById("exportListBtn"),
   importFileInput: document.getElementById("importFileInput"),
   exportImageBtn: document.getElementById("exportImageBtn"),
+  exportRankingBtn: document.getElementById("exportRankingBtn"),
   resetListBtn: document.getElementById("resetListBtn"),
-  rankingMovie: document.getElementById("rankingMovie"),
-  rankingSeries: document.getElementById("rankingSeries"),
-  rankingMusic: document.getElementById("rankingMusic"),
+  rankingPool: document.getElementById("rankingPool"),
+  rankingExportArea: document.getElementById("rankingExportArea"),
   exportBoard: document.getElementById("exportBoard"),
   exportBoardTitle: document.getElementById("exportBoardTitle"),
   exportBoardSubtitle: document.getElementById("exportBoardSubtitle"),
@@ -51,20 +60,14 @@ function init() {
 
 function bindEvents() {
   bindViewNavigation();
+  bindFilters();
+  bindRankingControls();
+
   els.searchForm.addEventListener("submit", onSearch);
-
-  document.querySelectorAll(".filter-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      state.filter = btn.dataset.filter;
-      document.querySelectorAll(".filter-btn").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      renderList();
-    });
-  });
-
   els.exportListBtn.addEventListener("click", exportListFile);
   els.importFileInput.addEventListener("change", importListFile);
   els.exportImageBtn.addEventListener("click", exportSummaryImage);
+  els.exportRankingBtn.addEventListener("click", exportRankingImage);
   els.resetListBtn.addEventListener("click", resetList);
 }
 
@@ -73,6 +76,58 @@ function bindViewNavigation() {
     chip.addEventListener("click", () => {
       state.activeView = chip.dataset.view;
       updateActiveView();
+    });
+  });
+}
+
+function bindFilters() {
+  els.filterBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      state.filter = btn.dataset.filter;
+      els.filterBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderList();
+    });
+  });
+
+  els.statusFilterBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      state.statusFilter = btn.dataset.status;
+      els.statusFilterBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderList();
+    });
+  });
+}
+
+function bindRankingControls() {
+  els.rankingTypeBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      state.rankingType = btn.dataset.rankingType;
+      els.rankingTypeBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderRankings();
+    });
+  });
+
+  const zones = [...els.tierDropzones, els.rankingPool];
+  zones.forEach((zone) => {
+    zone.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      zone.classList.add("is-over");
+    });
+
+    zone.addEventListener("dragleave", () => {
+      zone.classList.remove("is-over");
+    });
+
+    zone.addEventListener("drop", (event) => {
+      event.preventDefault();
+      zone.classList.remove("is-over");
+
+      const localId = event.dataTransfer.getData("text/plain");
+      const newTier = zone.dataset.tier || null;
+      assignTier(localId, newTier);
     });
   });
 }
@@ -156,7 +211,8 @@ async function searchTmdb(query, type) {
       source: "tmdb",
       notes: "",
       status: "pending",
-      rank: 0
+      tier: null,
+      tierOrder: 0
     };
   });
 }
@@ -186,7 +242,8 @@ async function searchMusic(query) {
       source: "lastfm",
       notes: "",
       status: "pending",
-      rank: 0
+      tier: null,
+      tierOrder: 0
     }));
 }
 
@@ -214,7 +271,6 @@ function renderSearchResults() {
 
   state.searchResults.forEach((result) => {
     const node = els.searchCardTemplate.content.cloneNode(true);
-    const card = node.querySelector("article");
     const img = node.querySelector(".result-image");
     const title = node.querySelector(".result-title");
     const year = node.querySelector(".result-year");
@@ -237,7 +293,6 @@ function renderSearchResults() {
       addBtn.addEventListener("click", () => addItem(result));
     }
 
-    card.dataset.type = result.mediaType;
     fragment.appendChild(node);
   });
 
@@ -255,7 +310,8 @@ function addItem(itemData) {
     source: itemData.source,
     notes: "",
     status: "pending",
-    rank: 0,
+    tier: null,
+    tierOrder: 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
@@ -269,7 +325,9 @@ function renderList() {
   els.myList.innerHTML = "";
 
   const visibleItems = state.items.filter(
-    (item) => state.filter === "all" || item.mediaType === state.filter
+    (item) =>
+      (state.filter === "all" || item.mediaType === state.filter) &&
+      (state.statusFilter === "all" || item.status === state.statusFilter)
   );
 
   if (!visibleItems.length) {
@@ -286,7 +344,6 @@ function renderList() {
       const title = node.querySelector(".list-title");
       const year = node.querySelector(".list-year");
       const notes = node.querySelector(".list-notes");
-      const rankSelect = node.querySelector(".rank-select");
       const toggleBtn = node.querySelector(".toggle-btn");
       const editBtn = node.querySelector(".edit-btn");
       const deleteBtn = node.querySelector(".delete-btn");
@@ -297,7 +354,6 @@ function renderList() {
       title.textContent = item.title;
       year.textContent = `Ano: ${item.year || "-"}`;
       notes.textContent = item.notes || "Sin notas";
-      rankSelect.value = String(item.rank || 0);
 
       toggleBtn.textContent = item.status === "done" ? "Desmarcar" : "Tachar";
 
@@ -305,12 +361,9 @@ function renderList() {
         card.classList.add("is-done");
       }
 
-      rankSelect.addEventListener("change", (event) => {
-        setItemRank(item.localId, Number(event.target.value));
-      });
       toggleBtn.addEventListener("click", () => toggleItemStatus(item.localId));
       editBtn.addEventListener("click", () => editItem(item.localId));
-      deleteBtn.addEventListener("click", () => deleteItem(item.localId));
+      deleteBtn.addEventListener("click", () => deleteItem(item.localId, card));
 
       fragment.appendChild(node);
     });
@@ -326,23 +379,6 @@ function labelMediaType(type) {
   if (type === "movie") return "Cine";
   if (type === "series") return "Series";
   return "Musica";
-}
-
-function setItemRank(localId, rank) {
-  state.items = state.items.map((item) => {
-    if (item.localId !== localId) {
-      return item;
-    }
-
-    return {
-      ...item,
-      rank,
-      updatedAt: new Date().toISOString()
-    };
-  });
-
-  persistState();
-  renderRankings();
 }
 
 function toggleItemStatus(localId) {
@@ -389,13 +425,96 @@ function editItem(localId) {
   renderAll();
 }
 
-function deleteItem(localId) {
+async function deleteItem(localId, cardEl) {
   const ok = confirm("Eliminar este elemento de tu lista?");
   if (!ok) return;
+
+  if (cardEl) {
+    cardEl.classList.add("deleting-card");
+    await waitForAnimation(cardEl, 680);
+  }
 
   state.items = state.items.filter((item) => item.localId !== localId);
   persistState();
   renderAll();
+}
+
+function renderRankings() {
+  const currentItems = state.items
+    .filter((item) => item.mediaType === state.rankingType)
+    .sort((a, b) => Number(a.tierOrder || 0) - Number(b.tierOrder || 0));
+
+  els.tierDropzones.forEach((zone) => {
+    zone.innerHTML = "";
+    const tier = zone.dataset.tier;
+    currentItems
+      .filter((item) => item.tier === tier)
+      .forEach((item) => zone.appendChild(createTierItem(item)));
+  });
+
+  els.rankingPool.innerHTML = "";
+  currentItems
+    .filter((item) => !TIERS.includes(item.tier))
+    .forEach((item) => els.rankingPool.appendChild(createTierItem(item)));
+
+  if (!currentItems.length) {
+    els.rankingPool.innerHTML = '<p class="ranking-empty">No hay items en esta categoria todavia.</p>';
+  }
+}
+
+function createTierItem(item) {
+  const useTextOnly = item.mediaType === "music" && isFallbackMusicCover(item.image);
+
+  const block = document.createElement("article");
+  block.className = `tier-item ${useTextOnly ? "text" : "visual"}`;
+  block.draggable = true;
+  block.dataset.localId = item.localId;
+
+  block.addEventListener("dragstart", (event) => {
+    event.dataTransfer.setData("text/plain", item.localId);
+  });
+
+  const title = document.createElement("span");
+  title.className = "tier-item-title";
+  title.textContent = item.title;
+
+  if (useTextOnly) {
+    block.appendChild(title);
+    return block;
+  }
+
+  const img = document.createElement("img");
+  img.src = item.image || FALLBACK_IMAGE;
+  img.alt = item.title;
+
+  block.appendChild(img);
+  block.appendChild(title);
+  return block;
+}
+
+function assignTier(localId, newTier) {
+  let changed = false;
+
+  state.items = state.items.map((item) => {
+    if (item.localId !== localId) {
+      return item;
+    }
+
+    changed = true;
+    return {
+      ...item,
+      tier: newTier,
+      tierOrder: Date.now(),
+      updatedAt: new Date().toISOString()
+    };
+  });
+
+  if (!changed) {
+    return;
+  }
+
+  persistState();
+  renderRankings();
 }
 
 function exportListFile() {
@@ -408,7 +527,7 @@ function exportListFile() {
   }
 
   const payload = {
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
     exportType,
     items: selectedItems
@@ -456,7 +575,8 @@ function importListFile(event) {
           source: item.source || "import",
           notes: item.notes || "",
           status: item.status === "done" ? "done" : "pending",
-          rank: clampRank(Number(item.rank || 0)),
+          tier: TIERS.includes(item.tier) ? item.tier : null,
+          tierOrder: Number(item.tierOrder || 0),
           createdAt: item.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }));
@@ -574,7 +694,7 @@ function buildExportBoard(items, exportType) {
 
       const score = document.createElement("span");
       score.className = "export-score";
-      score.textContent = item.rank > 0 ? `${item.rank}/10` : "-";
+      score.textContent = item.tier || "-";
 
       row.appendChild(text);
       row.appendChild(score);
@@ -585,81 +705,37 @@ function buildExportBoard(items, exportType) {
   });
 }
 
-function renderRankings() {
-  renderRankingForType(els.rankingMovie, "movie");
-  renderRankingForType(els.rankingSeries, "series");
-  renderRankingForType(els.rankingMusic, "music");
-}
-
-function renderRankingForType(container, mediaType) {
-  const ranked = state.items
-    .filter((item) => item.mediaType === mediaType && Number(item.rank) > 0)
-    .sort((a, b) => Number(b.rank) - Number(a.rank) || a.title.localeCompare(b.title))
-    .slice(0, 10);
-
-  container.innerHTML = "";
-
-  if (!ranked.length) {
-    container.innerHTML = '<p class="ranking-empty">Sin items puntuados todavia.</p>';
+async function exportRankingImage() {
+  const currentItems = state.items.filter((item) => item.mediaType === state.rankingType);
+  if (!currentItems.length) {
+    alert("No hay items para exportar en esta categoria.");
     return;
   }
 
-  const fragment = document.createDocumentFragment();
+  try {
+    els.exportRankingBtn.disabled = true;
+    els.exportRankingBtn.textContent = "Generando ranking...";
 
-  ranked.forEach((item) => {
-    const hideImageForSong = mediaType === "music" && isFallbackMusicCover(item.image);
+    const canvas = await html2canvas(els.rankingExportArea, {
+      backgroundColor: "#0f172a",
+      scale: 2,
+      useCORS: true
+    });
 
-    if (hideImageForSong) {
-      const songCard = document.createElement("article");
-      songCard.className = "rank-song-card";
-
-      const header = document.createElement("div");
-      header.className = "rank-song-header";
-
-      const label = document.createElement("span");
-      label.textContent = "Cancion";
-      label.className = "text-xs uppercase tracking-wide text-slate-400";
-
-      const score = document.createElement("span");
-      score.className = "rank-song-score";
-      score.textContent = `${item.rank}/10`;
-
-      header.appendChild(label);
-      header.appendChild(score);
-
-      const title = document.createElement("p");
-      title.className = "rank-song-title";
-      title.textContent = item.title;
-
-      songCard.appendChild(header);
-      songCard.appendChild(title);
-      fragment.appendChild(songCard);
-      return;
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+    if (!blob) {
+      throw new Error("No se pudo generar la imagen del ranking.");
     }
 
-    const mediaCard = document.createElement("article");
-    mediaCard.className = "rank-media-card";
-
-    const img = document.createElement("img");
-    img.className = "rank-media-thumb";
-    img.src = item.image || FALLBACK_IMAGE;
-    img.alt = item.title;
-
-    const score = document.createElement("span");
-    score.className = "rank-score-badge";
-    score.textContent = `${item.rank}/10`;
-
-    const caption = document.createElement("p");
-    caption.className = "rank-media-caption";
-    caption.textContent = item.title;
-
-    mediaCard.appendChild(img);
-    mediaCard.appendChild(score);
-    mediaCard.appendChild(caption);
-    fragment.appendChild(mediaCard);
-  });
-
-  container.appendChild(fragment);
+    const date = new Date().toISOString().slice(0, 10);
+    downloadBlob(blob, `ranking-${state.rankingType}-${date}.png`);
+  } catch (error) {
+    console.error(error);
+    alert("No se pudo exportar la imagen del ranking.");
+  } finally {
+    els.exportRankingBtn.disabled = false;
+    els.exportRankingBtn.textContent = "Exportar Ranking (imagen)";
+  }
 }
 
 function isFallbackMusicCover(imageUrl) {
@@ -680,6 +756,21 @@ function shouldShowExportCover(item) {
   }
 
   return item.image !== FALLBACK_IMAGE;
+}
+
+function waitForAnimation(element, timeoutMs) {
+  return new Promise((resolve) => {
+    let done = false;
+
+    const finish = () => {
+      if (done) return;
+      done = true;
+      resolve();
+    };
+
+    element.addEventListener("animationend", finish, { once: true });
+    setTimeout(finish, timeoutMs);
+  });
 }
 
 function resetList() {
@@ -706,16 +797,6 @@ function getFilteredItemsForExport(exportType) {
   return state.items.filter((item) => item.mediaType === exportType);
 }
 
-function clampRank(value) {
-  if (Number.isNaN(value)) {
-    return 0;
-  }
-
-  if (value < 0) return 0;
-  if (value > 10) return 10;
-  return Math.round(value);
-}
-
 function downloadBlob(blob, fileName) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -729,7 +810,11 @@ function downloadBlob(blob, fileName) {
 
 function loadState() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    let raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      raw = LEGACY_STORAGE_KEYS.map((key) => localStorage.getItem(key)).find((value) => !!value) || null;
+    }
+
     if (!raw) {
       state.items = [];
       return;
@@ -739,7 +824,8 @@ function loadState() {
     state.items = Array.isArray(parsed.items)
       ? parsed.items.map((item) => ({
           ...item,
-          rank: clampRank(Number(item.rank || 0))
+          tier: TIERS.includes(item.tier) ? item.tier : null,
+          tierOrder: Number(item.tierOrder || 0)
         }))
       : [];
   } catch (error) {
@@ -750,7 +836,7 @@ function loadState() {
 
 function persistState() {
   const payload = {
-    version: 2,
+    version: 3,
     items: state.items,
     savedAt: new Date().toISOString()
   };

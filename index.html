@@ -35,6 +35,10 @@
       <header class="section-card mb-8 p-6 sm:p-8">
         <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
+            <div class="app-brand mb-3">
+              <img src="Vaulty.png" alt="Vaulty" class="app-logo" />
+              <span class="app-brand-text">Vaulty</span>
+            </div>
             <p class="mb-2 inline-flex items-center rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-cyan-200">
               SPA Local + Compartible
             </p>
@@ -94,13 +98,20 @@
         <div class="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 class="text-xl font-semibold">Mi Lista</h2>
-            <p class="text-sm text-slate-400">Marca como completado, edita, puntua y elimina elementos.</p>
+            <p class="text-sm text-slate-400">Marca como completado, edita y elimina elementos.</p>
           </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button class="filter-btn active" data-filter="all">Todo</button>
-            <button class="filter-btn" data-filter="movie">Cine</button>
-            <button class="filter-btn" data-filter="series">Series</button>
-            <button class="filter-btn" data-filter="music">Musica</button>
+          <div class="flex flex-col gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <button class="filter-btn active" data-filter="all">Todo</button>
+              <button class="filter-btn" data-filter="movie">Cine</button>
+              <button class="filter-btn" data-filter="series">Series</button>
+              <button class="filter-btn" data-filter="music">Musica</button>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button class="status-filter-btn active" data-status="all">Todas</button>
+              <button class="status-filter-btn" data-status="done">Vistas/Hechas</button>
+              <button class="status-filter-btn" data-status="pending">No vistas</button>
+            </div>
           </div>
         </div>
 
@@ -131,20 +142,42 @@
 
       <section id="rankings" class="section-card view-panel p-6">
         <h2 class="mb-2 text-xl font-semibold">Rankings por Categoria</h2>
-        <p class="mb-5 text-sm text-slate-400">Asigna puntuaciones de 1 a 10 en cada tarjeta de tu lista para construir el ranking.</p>
+        <p class="mb-5 text-sm text-slate-400">Elige una categoria, arrastra cada item a su tier y exporta la imagen del ranking.</p>
 
-        <div class="grid gap-4 lg:grid-cols-3">
-          <article class="ranking-card">
-            <h3 class="ranking-title">Top Peliculas</h3>
-            <div id="rankingMovie" class="ranking-grid"></div>
-          </article>
-          <article class="ranking-card">
-            <h3 class="ranking-title">Top Series</h3>
-            <div id="rankingSeries" class="ranking-grid"></div>
-          </article>
-          <article class="ranking-card">
-            <h3 class="ranking-title">Top Canciones</h3>
-            <div id="rankingMusic" class="ranking-grid"></div>
+        <div class="mb-4 ranking-switcher">
+          <button class="ranking-type-btn active" data-ranking-type="movie" type="button">Ranking Peliculas</button>
+          <button class="ranking-type-btn" data-ranking-type="series" type="button">Ranking Series</button>
+          <button class="ranking-type-btn" data-ranking-type="music" type="button">Ranking Canciones</button>
+          <button id="exportRankingBtn" class="action-btn" type="button">Exportar Ranking (imagen)</button>
+        </div>
+
+        <div id="rankingExportArea" class="ranking-workspace">
+          <div class="tier-board">
+            <div class="tier-row tier-row-s">
+              <div class="tier-label tier-s">S</div>
+              <div class="tier-dropzone" data-tier="S" data-placeholder="Arrastra aqui tus top favoritos"></div>
+            </div>
+            <div class="tier-row tier-row-a">
+              <div class="tier-label tier-a">A</div>
+              <div class="tier-dropzone" data-tier="A" data-placeholder="Muy recomendados"></div>
+            </div>
+            <div class="tier-row tier-row-b">
+              <div class="tier-label tier-b">B</div>
+              <div class="tier-dropzone" data-tier="B" data-placeholder="Buenos"></div>
+            </div>
+            <div class="tier-row tier-row-c">
+              <div class="tier-label tier-c">C</div>
+              <div class="tier-dropzone" data-tier="C" data-placeholder="Aceptables"></div>
+            </div>
+            <div class="tier-row tier-row-d">
+              <div class="tier-label tier-d">D</div>
+              <div class="tier-dropzone" data-tier="D" data-placeholder="No me convencen"></div>
+            </div>
+          </div>
+
+          <article class="ranking-pool-card mt-5">
+            <h3 class="ranking-title">Items disponibles para rankear</h3>
+            <div id="rankingPool" class="ranking-pool" data-tier="" data-placeholder="Arrastra desde aqui para llenar el tier list"></div>
           </article>
         </div>
       </section>
@@ -183,23 +216,6 @@
         </div>
 
         <p class="list-notes min-h-11 rounded-lg bg-slate-900/70 p-2 text-sm text-slate-300"></p>
-
-        <div class="mt-3 mb-3 grid gap-2">
-          <label class="text-xs font-medium uppercase tracking-wide text-slate-400" for="">Puntuacion (ranking)</label>
-          <select class="rank-select field-input py-1.5 text-sm">
-            <option value="0">Sin puntuacion</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-            <option value="9">9</option>
-            <option value="10">10</option>
-          </select>
-        </div>
 
         <div class="grid grid-cols-3 gap-2">
           <button class="toggle-btn rounded-lg bg-emerald-500/80 px-2 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"></button>
