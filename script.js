@@ -11,10 +11,13 @@ const FALLBACK_IMAGE =
 const state = {
   items: [],
   filter: "all",
-  searchResults: []
+  searchResults: [],
+  activeView: "busqueda"
 };
 
 const els = {
+  viewChips: document.querySelectorAll(".view-chip"),
+  viewPanels: document.querySelectorAll(".view-panel"),
   searchForm: document.getElementById("searchForm"),
   searchType: document.getElementById("searchType"),
   searchInput: document.getElementById("searchInput"),
@@ -47,6 +50,7 @@ function init() {
 }
 
 function bindEvents() {
+  bindViewNavigation();
   els.searchForm.addEventListener("submit", onSearch);
 
   document.querySelectorAll(".filter-btn").forEach((btn) => {
@@ -64,7 +68,27 @@ function bindEvents() {
   els.resetListBtn.addEventListener("click", resetList);
 }
 
+function bindViewNavigation() {
+  els.viewChips.forEach((chip) => {
+    chip.addEventListener("click", () => {
+      state.activeView = chip.dataset.view;
+      updateActiveView();
+    });
+  });
+}
+
+function updateActiveView() {
+  els.viewPanels.forEach((panel) => {
+    panel.classList.toggle("active", panel.id === state.activeView);
+  });
+
+  els.viewChips.forEach((chip) => {
+    chip.classList.toggle("active", chip.dataset.view === state.activeView);
+  });
+}
+
 function renderAll() {
+  updateActiveView();
   renderList();
   renderSearchResults();
   renderRankings();

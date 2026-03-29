@@ -50,14 +50,15 @@
         </div>
 
         <nav class="grid gap-2 text-sm sm:grid-cols-2 md:grid-cols-4">
-          <a href="#busqueda" class="anchor-chip">Busqueda</a>
-          <a href="#lista" class="anchor-chip">Mi lista</a>
-          <a href="#sync" class="anchor-chip">Sincronizar y exportar</a>
-          <a href="#rankings" class="anchor-chip">Rankings</a>
+          <button class="anchor-chip view-chip active" data-view="busqueda" type="button">Busqueda</button>
+          <button class="anchor-chip view-chip" data-view="lista" type="button">Mi lista</button>
+          <button class="anchor-chip view-chip" data-view="sync" type="button">Sincronizar y exportar</button>
+          <button class="anchor-chip view-chip" data-view="rankings" type="button">Rankings</button>
         </nav>
       </header>
 
-      <section id="busqueda" class="section-card mb-8 p-6">
+      <div class="view-wrap">
+      <section id="busqueda" class="section-card view-panel active p-6">
         <h2 class="mb-4 text-xl font-semibold">Busqueda</h2>
 
         <form id="searchForm" class="grid gap-3 md:grid-cols-[220px_1fr_auto]">
@@ -89,7 +90,7 @@
         <div id="searchResults" class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
       </section>
 
-      <section id="lista" class="section-card mb-8 p-6">
+      <section id="lista" class="section-card view-panel p-6">
         <div class="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 class="text-xl font-semibold">Mi Lista</h2>
@@ -106,7 +107,7 @@
         <div id="myList" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
       </section>
 
-      <section id="sync" class="section-card mb-8 p-6">
+      <section id="sync" class="section-card view-panel p-6">
         <h2 class="mb-4 text-xl font-semibold">Sincronizar y Exportar</h2>
 
         <div class="mb-4 grid gap-3 sm:grid-cols-[220px_1fr] sm:items-center">
@@ -128,7 +129,7 @@
         </div>
       </section>
 
-      <section id="rankings" class="section-card p-6">
+      <section id="rankings" class="section-card view-panel p-6">
         <h2 class="mb-2 text-xl font-semibold">Rankings por Categoria</h2>
         <p class="mb-5 text-sm text-slate-400">Asigna puntuaciones de 1 a 10 en cada tarjeta de tu lista para construir el ranking.</p>
 
@@ -147,6 +148,7 @@
           </article>
         </div>
       </section>
+      </div>
     </main>
 
     <section id="exportBoard" class="export-board hidden" aria-hidden="true">
