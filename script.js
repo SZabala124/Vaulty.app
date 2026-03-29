@@ -552,6 +552,22 @@ function buildExportBoard(items, exportType) {
       checkbox.className = "export-checkbox";
       checkbox.textContent = item.status === "done" ? "✓" : "";
 
+      const showCover = shouldShowExportCover(item);
+      if (showCover) {
+        row.classList.add("with-cover");
+      }
+
+      if (showCover) {
+        const cover = document.createElement("img");
+        cover.className = "export-cover";
+        cover.src = item.image;
+        cover.alt = item.title;
+        row.appendChild(checkbox);
+        row.appendChild(cover);
+      } else {
+        row.appendChild(checkbox);
+      }
+
       const text = document.createElement("span");
       text.className = `export-text ${item.status === "done" ? "done" : ""}`;
       text.textContent = item.title;
@@ -560,7 +576,6 @@ function buildExportBoard(items, exportType) {
       score.className = "export-score";
       score.textContent = item.rank > 0 ? `${item.rank}/10` : "-";
 
-      row.appendChild(checkbox);
       row.appendChild(text);
       row.appendChild(score);
       wrapper.appendChild(row);
@@ -585,29 +600,86 @@ function renderRankingForType(container, mediaType) {
   container.innerHTML = "";
 
   if (!ranked.length) {
-    container.innerHTML = '<li class="ranking-empty">Sin items puntuados todavia.</li>';
+    container.innerHTML = '<p class="ranking-empty">Sin items puntuados todavia.</p>';
     return;
   }
 
   const fragment = document.createDocumentFragment();
 
   ranked.forEach((item) => {
-    const li = document.createElement("li");
-    li.className = "ranking-item";
+    const hideImageForSong = mediaType === "music" && isFallbackMusicCover(item.image);
 
-    const name = document.createElement("span");
-    name.textContent = item.title;
+    if (hideImageForSong) {
+      const songCard = document.createElement("article");
+      songCard.className = "rank-song-card";
+
+      const header = document.createElement("div");
+      header.className = "rank-song-header";
+
+      const label = document.createElement("span");
+      label.textContent = "Cancion";
+      label.className = "text-xs uppercase tracking-wide text-slate-400";
+
+      const score = document.createElement("span");
+      score.className = "rank-song-score";
+      score.textContent = `${item.rank}/10`;
+
+      header.appendChild(label);
+      header.appendChild(score);
+
+      const title = document.createElement("p");
+      title.className = "rank-song-title";
+      title.textContent = item.title;
+
+      songCard.appendChild(header);
+      songCard.appendChild(title);
+      fragment.appendChild(songCard);
+      return;
+    }
+
+    const mediaCard = document.createElement("article");
+    mediaCard.className = "rank-media-card";
+
+    const img = document.createElement("img");
+    img.className = "rank-media-thumb";
+    img.src = item.image || FALLBACK_IMAGE;
+    img.alt = item.title;
 
     const score = document.createElement("span");
-    score.className = "ranking-score";
+    score.className = "rank-score-badge";
     score.textContent = `${item.rank}/10`;
 
-    li.appendChild(name);
-    li.appendChild(score);
-    fragment.appendChild(li);
+    const caption = document.createElement("p");
+    caption.className = "rank-media-caption";
+    caption.textContent = item.title;
+
+    mediaCard.appendChild(img);
+    mediaCard.appendChild(score);
+    mediaCard.appendChild(caption);
+    fragment.appendChild(mediaCard);
   });
 
   container.appendChild(fragment);
+}
+
+function isFallbackMusicCover(imageUrl) {
+  if (!imageUrl) {
+    return true;
+  }
+
+  return imageUrl.includes("2a96cbd8b46e442fc41c2b86b821562f") || imageUrl.includes("/34s/");
+}
+
+function shouldShowExportCover(item) {
+  if (!item || (item.mediaType !== "movie" && item.mediaType !== "series")) {
+    return false;
+  }
+
+  if (!item.image) {
+    return false;
+  }
+
+  return item.image !== FALLBACK_IMAGE;
 }
 
 function resetList() {
