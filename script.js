@@ -35,6 +35,12 @@ const els = {
   rankingTypeBtns: document.querySelectorAll(".ranking-type-btn"),
   tierDropzones: document.querySelectorAll(".tier-dropzone"),
   searchForm: document.getElementById("searchForm"),
+  manualAddForm: document.getElementById("manualAddForm"),
+  manualType: document.getElementById("manualType"),
+  manualTitle: document.getElementById("manualTitle"),
+  manualSecondary: document.getElementById("manualSecondary"),
+  manualImage: document.getElementById("manualImage"),
+  manualTextBlock: document.getElementById("manualTextBlock"),
   searchType: document.getElementById("searchType"),
   searchInput: document.getElementById("searchInput"),
   searchMessage: document.getElementById("searchMessage"),
@@ -74,6 +80,8 @@ function bindEvents() {
   bindRankingControls();
 
   els.searchForm.addEventListener("submit", onSearch);
+  els.manualAddForm.addEventListener("submit", onManualAdd);
+  els.manualType.addEventListener("change", syncManualTextBlockByType);
   els.newListBtn.addEventListener("click", createNewList);
   els.listSelect.addEventListener("change", (event) => setActiveList(event.target.value));
   els.exportListBtn.addEventListener("click", exportListFile);
@@ -81,6 +89,8 @@ function bindEvents() {
   els.exportImageBtn.addEventListener("click", exportSummaryImage);
   els.exportRankingBtn.addEventListener("click", exportRankingImage);
   els.resetListBtn.addEventListener("click", resetList);
+
+  syncManualTextBlockByType();
 }
 
 function bindViewNavigation() {
@@ -233,6 +243,54 @@ async function onSearch(event) {
   }
 }
 
+function onManualAdd(event) {
+  event.preventDefault();
+
+  const mediaType = els.manualType.value;
+  const titleBase = els.manualTitle.value.trim();
+  const secondary = els.manualSecondary.value.trim();
+  const imageUrl = els.manualImage.value.trim();
+  const asTextBlock = els.manualTextBlock.checked;
+
+  if (!titleBase) {
+    alert("Ingresa un nombre para el item manual.");
+    return;
+  }
+
+  const fullTitle =
+    mediaType === "music" && secondary ? `${titleBase} - ${secondary}` : titleBase;
+
+  const newItem = {
+    localId: createLocalId(),
+    sourceId: `manual-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    mediaType,
+    title: fullTitle,
+    year: "-",
+    image: imageUrl || FALLBACK_IMAGE,
+    source: "manual",
+    notes: secondary && mediaType !== "music" ? secondary : "",
+    status: "pending",
+    forceTextBlock: asTextBlock,
+    tier: null,
+    tierOrder: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  const activeList = getActiveList();
+  activeList.items.unshift(newItem);
+
+  els.manualAddForm.reset();
+  syncManualTextBlockByType();
+  persistState();
+  renderAll();
+}
+
+function syncManualTextBlockByType() {
+  const isTextFirstType = els.manualType.value === "music" || els.manualType.value === "custom";
+  els.manualTextBlock.checked = isTextFirstType;
+}
+
 function assertApiKey(keyValue, apiName) {
   if (!keyValue || keyValue.includes("PON_AQUI")) {
     throw new Error(`Falta configurar la API KEY de ${apiName} en script.js`);
@@ -362,6 +420,7 @@ function addItem(itemData) {
     source: itemData.source,
     notes: "",
     status: "pending",
+    forceTextBlock: false,
     tier: null,
     tierOrder: 0,
     createdAt: new Date().toISOString(),
@@ -432,7 +491,8 @@ function renderList() {
 function labelMediaType(type) {
   if (type === "movie") return "Cine";
   if (type === "series") return "Series";
-  return "Musica";
+  if (type === "music") return "Musica";
+  return "Extra";
 }
 
 function toggleItemStatus(localId) {
@@ -517,7 +577,7 @@ function renderRankings() {
 }
 
 function createTierItem(item) {
-  const useTextOnly = item.mediaType === "music" && isFallbackMusicCover(item.image);
+  const useTextOnly = item.forceTextBlock || item.mediaType === "custom" || (item.mediaType === "music" && isFallbackMusicCover(item.image));
 
   const block = document.createElement("article");
   block.className = `tier-item ${useTextOnly ? "text" : "visual"}`;
@@ -631,6 +691,7 @@ function importListFile(event) {
           source: item.source || "import",
           notes: item.notes || "",
           status: item.status === "done" ? "done" : "pending",
+          forceTextBlock: item.forceTextBlock === true,
           tier: TIERS.includes(item.tier) ? item.tier : null,
           tierOrder: Number(item.tierOrder || 0),
           createdAt: item.createdAt || new Date().toISOString(),
@@ -701,13 +762,15 @@ function buildExportBoard(items, exportType) {
   const grouped = {
     movie: items.filter((item) => item.mediaType === "movie"),
     series: items.filter((item) => item.mediaType === "series"),
-    music: items.filter((item) => item.mediaType === "music")
+    music: items.filter((item) => item.mediaType === "music"),
+    custom: items.filter((item) => item.mediaType === "custom")
   };
 
   const groupsToRender = [
     { key: "movie", title: "Peliculas" },
     { key: "series", title: "Series" },
-    { key: "music", title: "Canciones" }
+    { key: "music", title: "Canciones" },
+    { key: "custom", title: "Extras" }
   ].filter((group) => grouped[group.key].length > 0);
 
   els.exportChecklist.innerHTML = "";
@@ -807,7 +870,7 @@ function isFallbackMusicCover(imageUrl) {
 }
 
 function shouldShowExportCover(item) {
-  if (!item || (item.mediaType !== "movie" && item.mediaType !== "series")) {
+  if (!item || item.forceTextBlock || (item.mediaType !== "movie" && item.mediaType !== "series")) {
     return false;
   }
 
@@ -913,6 +976,7 @@ function loadState() {
         items: Array.isArray(list.items)
           ? list.items.map((item) => ({
               ...item,
+              forceTextBlock: item.forceTextBlock === true,
               tier: TIERS.includes(item.tier) ? item.tier : null,
               tierOrder: Number(item.tierOrder || 0)
             }))
@@ -929,6 +993,7 @@ function loadState() {
         name: "Principal",
         items: legacyItems.map((item) => ({
           ...item,
+          forceTextBlock: item.forceTextBlock === true,
           tier: TIERS.includes(item.tier) ? item.tier : null,
           tierOrder: Number(item.tierOrder || 0)
         }))

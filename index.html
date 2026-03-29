@@ -99,6 +99,35 @@
         </p>
 
         <div id="searchResults" class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
+
+        <article class="manual-add mt-8">
+          <h3 class="manual-add-title">Agregar manual (extra o bloque de texto)</h3>
+          <p class="mb-4 text-sm text-slate-400">
+            Crea items fuera del buscador. Para canciones o extras puedes usar bloque de texto para rankings.
+          </p>
+
+          <form id="manualAddForm" class="grid gap-3 md:grid-cols-2">
+            <select id="manualType" class="field-input" required>
+              <option value="movie">Pelicula personalizada</option>
+              <option value="series">Serie personalizada</option>
+              <option value="music">Cancion personalizada</option>
+              <option value="custom">Extra / Bloque de texto</option>
+            </select>
+
+            <input id="manualTitle" type="text" class="field-input" placeholder="Nombre principal" required />
+
+            <input id="manualSecondary" type="text" class="field-input" placeholder="Artista o subtitulo (opcional)" />
+
+            <input id="manualImage" type="url" class="field-input" placeholder="URL de imagen (opcional)" />
+
+            <label class="manual-check md:col-span-2">
+              <input id="manualTextBlock" type="checkbox" />
+              <span>Guardar como bloque de texto (sin imagen en ranking)</span>
+            </label>
+
+            <button type="submit" class="action-btn md:col-span-2">Agregar item manual</button>
+          </form>
+        </article>
       </section>
 
       <section id="lista" class="section-card view-panel p-6">
@@ -113,6 +142,7 @@
               <button class="filter-btn" data-filter="movie">Cine</button>
               <button class="filter-btn" data-filter="series">Series</button>
               <button class="filter-btn" data-filter="music">Musica</button>
+              <button class="filter-btn" data-filter="custom">Extras</button>
             </div>
             <div class="flex flex-wrap items-center gap-2">
               <button class="status-filter-btn active" data-status="all">Todas</button>
@@ -135,6 +165,7 @@
             <option value="movie">Solo peliculas</option>
             <option value="series">Solo series</option>
             <option value="music">Solo canciones</option>
+            <option value="custom">Solo extras</option>
           </select>
         </div>
 
@@ -155,6 +186,7 @@
           <button class="ranking-type-btn active" data-ranking-type="movie" type="button">Ranking Peliculas</button>
           <button class="ranking-type-btn" data-ranking-type="series" type="button">Ranking Series</button>
           <button class="ranking-type-btn" data-ranking-type="music" type="button">Ranking Canciones</button>
+          <button class="ranking-type-btn" data-ranking-type="custom" type="button">Ranking Extras</button>
           <button id="exportRankingBtn" class="action-btn" type="button">Exportar Ranking (imagen)</button>
         </div>
 
