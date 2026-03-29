@@ -1,0 +1,117 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  background:
+    radial-gradient(circle at 12% 15%, rgba(34, 211, 238, 0.25), transparent 32%),
+    radial-gradient(circle at 82% 18%, rgba(14, 165, 233, 0.2), transparent 28%),
+    linear-gradient(160deg, #020617 0%, #0f172a 45%, #111827 100%);
+  overflow-x: hidden;
+}
+
+.bg-orb {
+  position: fixed;
+  z-index: -1;
+  border-radius: 999px;
+  filter: blur(80px);
+  opacity: 0.3;
+  animation: float 16s ease-in-out infinite;
+}
+
+.orb-1 {
+  width: 220px;
+  height: 220px;
+  left: -60px;
+  top: 20%;
+  background: #0ea5e9;
+}
+
+.orb-2 {
+  width: 300px;
+  height: 300px;
+  right: -100px;
+  bottom: 10%;
+  background: #22d3ee;
+  animation-delay: 2s;
+}
+
+.filter-btn,
+.action-btn {
+  border: 1px solid rgba(100, 116, 139, 0.45);
+  border-radius: 0.8rem;
+  background: rgba(15, 23, 42, 0.8);
+  color: #e2e8f0;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 220ms ease;
+}
+
+.filter-btn:hover,
+.action-btn:hover {
+  border-color: rgba(34, 211, 238, 0.75);
+  transform: translateY(-2px);
+}
+
+.filter-btn.active {
+  background: rgba(34, 211, 238, 0.2);
+  border-color: rgba(34, 211, 238, 0.9);
+  color: #67e8f9;
+}
+
+.result-image,
+.list-image {
+  background:
+    linear-gradient(135deg, rgba(14, 165, 233, 0.4), rgba(30, 41, 59, 0.4)),
+    #1e293b;
+}
+
+.card-pop {
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+  animation: fadeIn 340ms ease forwards;
+}
+
+.card-pop:hover {
+  transform: translateY(-4px);
+  border-color: rgba(34, 211, 238, 0.6);
+  box-shadow: 0 16px 28px rgba(2, 132, 199, 0.12);
+}
+
+.is-done {
+  opacity: 0.76;
+  border-color: rgba(52, 211, 153, 0.6);
+}
+
+.is-done .list-title {
+  text-decoration: line-through;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-24px);
+  }
+}

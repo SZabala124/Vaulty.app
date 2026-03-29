@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mi Lista Multimedia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                500: "#22d3ee",
+                600: "#06b6d4"
+              }
+            }
+          }
+        }
+      };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="min-h-screen text-slate-100">
+    <div class="bg-orb orb-1" aria-hidden="true"></div>
+    <div class="bg-orb orb-2" aria-hidden="true"></div>
+
+    <main class="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <header class="mb-8 rounded-2xl border border-slate-700/50 bg-slate-900/70 p-6 shadow-2xl backdrop-blur">
+        <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p class="mb-2 inline-flex items-center rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-cyan-200">
+              SPA Local + Exportable
+            </p>
+            <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">Mi Lista Multimedia</h1>
+            <p class="mt-2 max-w-2xl text-sm text-slate-300 sm:text-base">
+              Busca películas, series y canciones. Guarda tu lista para ver/escuchar y márcala cuando completes cada elemento.
+            </p>
+          </div>
+          <div class="text-sm text-slate-300">
+            <p>Guardado automático en LocalStorage.</p>
+            <p id="itemsCount" class="font-medium text-cyan-300">0 elementos guardados</p>
+          </div>
+        </div>
+      </header>
+
+      <section class="mb-8 rounded-2xl border border-slate-700/50 bg-slate-900/70 p-6 shadow-2xl backdrop-blur">
+        <h2 class="mb-4 text-xl font-semibold">Buscador</h2>
+
+        <form id="searchForm" class="grid gap-3 md:grid-cols-[200px_1fr_auto]">
+          <label class="sr-only" for="searchType">Tipo de contenido</label>
+          <select
+            id="searchType"
+            class="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-slate-100 transition focus:border-cyan-400 focus:outline-none"
+          >
+            <option value="movie">Películas (TMDb)</option>
+            <option value="series">Series (TMDb)</option>
+            <option value="music">Canciones (Last.fm)</option>
+          </select>
+
+          <label class="sr-only" for="searchInput">Buscar contenido</label>
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="Ej: Interstellar, Breaking Bad, Daft Punk..."
+            class="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-slate-100 placeholder:text-slate-400 transition focus:border-cyan-400 focus:outline-none"
+            required
+          />
+
+          <button
+            type="submit"
+            class="rounded-xl bg-brand-500 px-4 py-2 font-semibold text-slate-950 transition hover:bg-brand-600"
+          >
+            Buscar
+          </button>
+        </form>
+
+        <p id="searchMessage" class="mt-3 text-sm text-slate-400">
+          Completa tu API KEY de TMDb y Last.fm en <code>script.js</code> para activar las búsquedas.
+        </p>
+
+        <div id="searchResults" class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
+      </section>
+
+      <section class="rounded-2xl border border-slate-700/50 bg-slate-900/70 p-6 shadow-2xl backdrop-blur">
+        <div class="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 class="text-xl font-semibold">Mi Lista</h2>
+            <p class="text-sm text-slate-400">Marca como completado, edita notas o elimina elementos.</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button class="filter-btn active" data-filter="all">Todo</button>
+            <button class="filter-btn" data-filter="movie">Cine</button>
+            <button class="filter-btn" data-filter="series">Series</button>
+            <button class="filter-btn" data-filter="music">Música</button>
+          </div>
+        </div>
+
+        <div class="mb-6 flex flex-wrap gap-3">
+          <button id="exportListBtn" class="action-btn">Exportar Lista (.mylist)</button>
+          <label for="importFileInput" class="action-btn cursor-pointer">Cargar Lista</label>
+          <input id="importFileInput" type="file" accept=".json,.mylist" class="hidden" />
+          <button id="exportImageBtn" class="action-btn">Exportar Resumen (imagen)</button>
+        </div>
+
+        <div id="myList" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
+      </section>
+    </main>
+
+    <template id="searchCardTemplate">
+      <article class="card-pop rounded-2xl border border-slate-700 bg-slate-800/80 p-3">
+        <img class="result-image mb-3 h-56 w-full rounded-xl object-cover" alt="Poster" />
+        <h3 class="result-title line-clamp-1 text-lg font-semibold"></h3>
+        <p class="result-year text-sm text-slate-300"></p>
+        <button class="add-btn mt-4 w-full rounded-lg bg-cyan-400/90 px-3 py-2 font-semibold text-slate-950 transition hover:bg-cyan-300">
+          Añadir a mi lista
+        </button>
+      </article>
+    </template>
+
+    <template id="listCardTemplate">
+      <article class="card-pop rounded-2xl border border-slate-700 bg-slate-800/80 p-3">
+        <div class="mb-3 flex gap-3">
+          <img class="list-image h-24 w-16 rounded-lg object-cover" alt="Cover" />
+          <div class="min-w-0 flex-1">
+            <p class="list-type mb-1 inline-flex rounded-full bg-slate-700 px-2 py-0.5 text-xs font-medium uppercase text-cyan-200"></p>
+            <h3 class="list-title truncate text-lg font-semibold"></h3>
+            <p class="list-year text-sm text-slate-300"></p>
+          </div>
+        </div>
+
+        <p class="list-notes min-h-11 rounded-lg bg-slate-900/70 p-2 text-sm text-slate-300"></p>
+
+        <div class="mt-3 grid grid-cols-3 gap-2">
+          <button class="toggle-btn rounded-lg bg-emerald-500/80 px-2 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"></button>
+          <button class="edit-btn rounded-lg bg-amber-400/90 px-2 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-300">Editar</button>
+          <button class="delete-btn rounded-lg bg-rose-500/85 px-2 py-2 text-sm font-semibold text-white transition hover:bg-rose-400">Eliminar</button>
+        </div>
+      </article>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
