@@ -40,6 +40,7 @@ const els = {
   manualTitle: document.getElementById("manualTitle"),
   manualSecondary: document.getElementById("manualSecondary"),
   manualImage: document.getElementById("manualImage"),
+  manualImageFile: document.getElementById("manualImageFile"),
   manualTextBlock: document.getElementById("manualTextBlock"),
   searchType: document.getElementById("searchType"),
   searchInput: document.getElementById("searchInput"),
@@ -243,13 +244,14 @@ async function onSearch(event) {
   }
 }
 
-function onManualAdd(event) {
+async function onManualAdd(event) {
   event.preventDefault();
 
   const mediaType = els.manualType.value;
   const titleBase = els.manualTitle.value.trim();
   const secondary = els.manualSecondary.value.trim();
   const imageUrl = els.manualImage.value.trim();
+  const imageFile = els.manualImageFile.files?.[0] || null;
   const asTextBlock = els.manualTextBlock.checked;
 
   if (!titleBase) {
@@ -260,13 +262,30 @@ function onManualAdd(event) {
   const fullTitle =
     mediaType === "music" && secondary ? `${titleBase} - ${secondary}` : titleBase;
 
+  let resolvedImage = imageUrl || FALLBACK_IMAGE;
+  if (imageFile) {
+    const allowedTypes = ["image/png", "image/jpeg", "image/svg+xml"];
+    if (!allowedTypes.includes(imageFile.type)) {
+      alert("Formato no permitido. Usa PNG, JPG/JPEG o SVG.");
+      return;
+    }
+
+    try {
+      resolvedImage = await fileToDataURL(imageFile);
+    } catch (error) {
+      console.error(error);
+      alert("No se pudo leer la imagen seleccionada.");
+      return;
+    }
+  }
+
   const newItem = {
     localId: createLocalId(),
     sourceId: `manual-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     mediaType,
     title: fullTitle,
     year: "-",
-    image: imageUrl || FALLBACK_IMAGE,
+    image: resolvedImage,
     source: "manual",
     notes: secondary && mediaType !== "music" ? secondary : "",
     status: "pending",
@@ -284,6 +303,15 @@ function onManualAdd(event) {
   syncManualTextBlockByType();
   persistState();
   renderAll();
+}
+
+function fileToDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Error leyendo archivo"));
+    reader.readAsDataURL(file);
+  });
 }
 
 function syncManualTextBlockByType() {
