@@ -354,7 +354,7 @@ function compressRasterDataUrl(dataUrl, maxSide = 900, quality = 0.82) {
 }
 
 function syncManualTextBlockByType() {
-  const isTextFirstType = els.manualType.value === "music" || els.manualType.value === "custom";
+  const isTextFirstType = els.manualType.value === "music";
   els.manualTextBlock.checked = isTextFirstType;
 }
 
@@ -648,7 +648,7 @@ function renderRankings() {
 }
 
 function createTierItem(item) {
-  const useTextOnly = item.forceTextBlock || item.mediaType === "custom" || (item.mediaType === "music" && isFallbackMusicCover(item.image));
+  const useTextOnly = item.forceTextBlock || (item.mediaType === "music" && isFallbackMusicCover(item.image));
 
   const block = document.createElement("article");
   block.className = `tier-item ${useTextOnly ? "text" : "visual"}`;
