@@ -60,6 +60,7 @@ const els = {
   listSelectSync: document.getElementById("listSelectSync"),
   listSelectRanking: document.getElementById("listSelectRanking"),
   newListName: document.getElementById("newListName"),
+  deleteListBtn: document.getElementById("deleteListBtn"),
   newListBtn: document.getElementById("newListBtn"),
   rankingPool: document.getElementById("rankingPool"),
   rankingExportArea: document.getElementById("rankingExportArea"),
@@ -88,6 +89,9 @@ function bindEvents() {
   els.manualAddForm.addEventListener("submit", onManualAdd);
   els.manualType.addEventListener("change", syncManualTextBlockByType);
   els.newListBtn.addEventListener("click", createNewList);
+  if (els.deleteListBtn) {
+    els.deleteListBtn.addEventListener("click", deleteCurrentList);
+  }
   els.listSelect.addEventListener("change", (event) => setActiveList(event.target.value));
   if (els.listSelectInList) {
     els.listSelectInList.addEventListener("change", (event) => setActiveList(event.target.value));
@@ -240,6 +244,10 @@ function renderListSelector() {
       els.listSelectRanking.appendChild(option);
     });
   }
+
+  if (els.deleteListBtn) {
+    els.deleteListBtn.disabled = state.lists.length <= 1;
+  }
 }
 
 function createNewList() {
@@ -253,6 +261,22 @@ function createNewList() {
   state.lists.push({ id, name: rawName, items: [] });
   state.activeListId = id;
   els.newListName.value = "";
+  persistState();
+  renderAll();
+}
+
+function deleteCurrentList() {
+  if (state.lists.length <= 1) {
+    alert("No puedes eliminar la última lista.");
+    return;
+  }
+
+  const activeList = getActiveList();
+  const confirmDel = confirm(`Eliminar lista '${activeList.name}' y todos sus elementos?`);
+  if (!confirmDel) return;
+
+  state.lists = state.lists.filter((list) => list.id !== activeList.id);
+  state.activeListId = state.lists[0]?.id || "default";
   persistState();
   renderAll();
 }
