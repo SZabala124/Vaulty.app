@@ -47,6 +47,7 @@ const els = {
   searchMessage: document.getElementById("searchMessage"),
   searchResults: document.getElementById("searchResults"),
   myList: document.getElementById("myList"),
+  listSectionTitle: document.getElementById("listSectionTitle"),
   itemsCount: document.getElementById("itemsCount"),
   exportScope: document.getElementById("exportScope"),
   exportListBtn: document.getElementById("exportListBtn"),
@@ -506,6 +507,7 @@ function renderList() {
   els.myList.innerHTML = "";
 
   const activeList = getActiveList();
+  els.listSectionTitle.textContent = activeList?.name || "Mi Lista";
   const visibleItems = activeList.items.filter(
     (item) =>
       (state.filter === "all" || item.mediaType === state.filter) &&
