@@ -152,6 +152,10 @@
             <p class="text-sm text-slate-400">Marca como completado, edita y elimina elementos.</p>
           </div>
           <div class="flex flex-col gap-2">
+            <label class="text-xs text-slate-400">Lista activa</label>
+            <select id="listSelectInList" class="field-input w-full mt-1"></select>
+          </div>
+          <div class="flex flex-col gap-2">
             <div class="flex flex-wrap items-center gap-2">
               <button class="filter-btn active" data-filter="all">Todo</button>
               <button class="filter-btn" data-filter="movie">Cine</button>
@@ -183,6 +187,10 @@
             <option value="custom">Solo extras</option>
           </select>
         </div>
+        <div class="mb-4 grid gap-3 sm:grid-cols-[220px_1fr] sm:items-center">
+          <label for="listSelectSync" class="text-sm text-slate-300">Lista activa:</label>
+          <select id="listSelectSync" class="field-input max-w-xs"></select>
+        </div>
 
         <div class="flex flex-wrap gap-3">
           <button id="exportListBtn" class="action-btn">Exportar Lista (.mylist)</button>
@@ -203,6 +211,10 @@
           <button class="ranking-type-btn" data-ranking-type="music" type="button">Ranking Canciones</button>
           <button class="ranking-type-btn" data-ranking-type="custom" type="button">Ranking Extras</button>
           <button id="exportRankingBtn" class="action-btn" type="button">Exportar Ranking (imagen)</button>
+        </div>
+        <div class="mb-4 grid gap-3 sm:grid-cols-[220px_1fr] sm:items-center">
+          <label for="listSelectRanking" class="text-sm text-slate-300">Lista activa:</label>
+          <select id="listSelectRanking" class="field-input max-w-xs"></select>
         </div>
 
         <div id="rankingExportArea" class="ranking-workspace">

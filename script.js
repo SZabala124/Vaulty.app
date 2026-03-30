@@ -56,6 +56,9 @@ const els = {
   exportRankingBtn: document.getElementById("exportRankingBtn"),
   resetListBtn: document.getElementById("resetListBtn"),
   listSelect: document.getElementById("listSelect"),
+  listSelectInList: document.getElementById("listSelectInList"),
+  listSelectSync: document.getElementById("listSelectSync"),
+  listSelectRanking: document.getElementById("listSelectRanking"),
   newListName: document.getElementById("newListName"),
   newListBtn: document.getElementById("newListBtn"),
   rankingPool: document.getElementById("rankingPool"),
@@ -86,6 +89,15 @@ function bindEvents() {
   els.manualType.addEventListener("change", syncManualTextBlockByType);
   els.newListBtn.addEventListener("click", createNewList);
   els.listSelect.addEventListener("change", (event) => setActiveList(event.target.value));
+  if (els.listSelectInList) {
+    els.listSelectInList.addEventListener("change", (event) => setActiveList(event.target.value));
+  }
+  if (els.listSelectSync) {
+    els.listSelectSync.addEventListener("change", (event) => setActiveList(event.target.value));
+  }
+  if (els.listSelectRanking) {
+    els.listSelectRanking.addEventListener("change", (event) => setActiveList(event.target.value));
+  }
   els.exportListBtn.addEventListener("click", exportListFile);
   els.importFileInput.addEventListener("change", importListFile);
   els.exportImageBtn.addEventListener("click", exportSummaryImage);
@@ -195,6 +207,39 @@ function renderListSelector() {
     option.selected = list.id === active.id;
     els.listSelect.appendChild(option);
   });
+
+  if (els.listSelectInList) {
+    els.listSelectInList.innerHTML = "";
+    state.lists.forEach((list) => {
+      const option = document.createElement("option");
+      option.value = list.id;
+      option.textContent = list.name;
+      option.selected = list.id === active.id;
+      els.listSelectInList.appendChild(option);
+    });
+  }
+
+  if (els.listSelectSync) {
+    els.listSelectSync.innerHTML = "";
+    state.lists.forEach((list) => {
+      const option = document.createElement("option");
+      option.value = list.id;
+      option.textContent = list.name;
+      option.selected = list.id === active.id;
+      els.listSelectSync.appendChild(option);
+    });
+  }
+
+  if (els.listSelectRanking) {
+    els.listSelectRanking.innerHTML = "";
+    state.lists.forEach((list) => {
+      const option = document.createElement("option");
+      option.value = list.id;
+      option.textContent = list.name;
+      option.selected = list.id === active.id;
+      els.listSelectRanking.appendChild(option);
+    });
+  }
 }
 
 function createNewList() {
