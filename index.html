@@ -46,26 +46,13 @@
           </div>
         </div>
 
-        <nav class="grid gap-2 text-sm sm:grid-cols-2 md:grid-cols-4">
+        <nav class="grid gap-2 text-sm sm:grid-cols-2 md:grid-cols-5">
           <button class="anchor-chip view-chip active" data-view="busqueda" type="button">Busqueda</button>
           <button class="anchor-chip view-chip" data-view="lista" type="button">Mi lista</button>
+          <button class="anchor-chip view-chip" data-view="extras" type="button">Extras</button>
           <button class="anchor-chip view-chip" data-view="sync" type="button">Sincronizar y exportar</button>
           <button class="anchor-chip view-chip" data-view="rankings" type="button">Rankings</button>
         </nav>
-
-        <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
-          <div>
-            <label class="text-xs text-slate-400">Lista activa</label>
-            <select id="listSelect" class="field-input w-full mt-1"></select>
-          </div>
-          <div>
-            <label class="text-xs text-slate-400">Nuevo nombre de lista</label>
-            <input id="newListName" type="text" placeholder="Nombre nueva lista" class="field-input w-full mt-1" />
-          </div>
-          <div class="flex items-end">
-            <button id="newListBtn" class="action-btn w-full">Crear lista</button>
-          </div>
-        </div>
       </header>
 
       <div class="view-wrap">
@@ -99,8 +86,29 @@
         </p>
 
         <div id="searchResults" class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
+      </section>
 
-        <article class="manual-add mt-8">
+      <section id="extras" class="section-card view-panel p-6">
+        <h2 class="mb-4 text-xl font-semibold">Extras</h2>
+
+        <article class="manual-add mb-6">
+          <h3 class="manual-add-title">Gestion de listas</h3>
+          <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
+            <div>
+              <label class="text-xs text-slate-400">Lista activa</label>
+              <select id="listSelect" class="field-input w-full mt-1"></select>
+            </div>
+            <div>
+              <label class="text-xs text-slate-400">Nuevo nombre de lista</label>
+              <input id="newListName" type="text" placeholder="Nombre nueva lista" class="field-input w-full mt-1" />
+            </div>
+            <div class="flex items-end">
+              <button id="newListBtn" class="action-btn w-full">Crear lista</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="manual-add">
           <h3 class="manual-add-title">Agregar manual (extra o bloque de texto)</h3>
           <p class="mb-4 text-sm text-slate-400">
             Crea items fuera del buscador. Para canciones o extras puedes usar bloque de texto para rankings.

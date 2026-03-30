@@ -301,16 +301,54 @@ async function onManualAdd(event) {
 
   els.manualAddForm.reset();
   syncManualTextBlockByType();
-  persistState();
+  if (!persistState()) {
+    activeList.items.shift();
+    return;
+  }
   renderAll();
 }
 
-function fileToDataURL(file) {
+async function fileToDataURL(file) {
+  if (file.type === "image/svg+xml") {
+    return readFileAsDataURL(file);
+  }
+
+  const rawData = await readFileAsDataURL(file);
+  return compressRasterDataUrl(rawData);
+}
+
+function readFileAsDataURL(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result || ""));
     reader.onerror = () => reject(new Error("Error leyendo archivo"));
     reader.readAsDataURL(file);
+  });
+}
+
+function compressRasterDataUrl(dataUrl, maxSide = 900, quality = 0.82) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const ratio = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const width = Math.max(1, Math.round(img.width * ratio));
+      const height = Math.max(1, Math.round(img.height * ratio));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(dataUrl);
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0, width, height);
+      const compressed = canvas.toDataURL("image/webp", quality);
+      resolve(compressed || dataUrl);
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
   });
 }
 
@@ -457,7 +495,10 @@ function addItem(itemData) {
 
   const activeList = getActiveList();
   activeList.items.unshift(newItem);
-  persistState();
+  if (!persistState()) {
+    activeList.items.shift();
+    return;
+  }
   renderAll();
 }
 
@@ -1043,7 +1084,14 @@ function persistState() {
     savedAt: new Date().toISOString()
   };
 
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    return true;
+  } catch (error) {
+    console.error("No se pudo guardar en LocalStorage:", error);
+    alert("No se pudo guardar: el almacenamiento local esta lleno. Reduce imagenes pesadas o elimina algunos items.");
+    return false;
+  }
 }
 
 function createLocalId() {
